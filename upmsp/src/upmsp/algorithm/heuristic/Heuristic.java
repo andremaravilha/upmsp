@@ -1,6 +1,5 @@
 package upmsp.algorithm.heuristic;
 
-import upmsp.algorithm.learning.*;
 import upmsp.algorithm.neighborhood.*;
 import upmsp.model.*;
 import upmsp.model.solution.*;
@@ -16,8 +15,6 @@ import java.util.*;
  */
 public abstract class Heuristic {
 
-    public final static boolean USE_LEARNING = false;
-
     public final Problem problem;
     public final Random random;
     public final String name;
@@ -27,8 +24,6 @@ public abstract class Heuristic {
     protected Solution bestSolution;
     protected int sumWeights = 0;
     protected long nIters = 0;
-
-    protected LearningAutomata learningAutomata = null;
 
 
     /**
@@ -42,8 +37,6 @@ public abstract class Heuristic {
         this.problem = problem;
         this.random = random;
         this.name = name;
-
-        if (USE_LEARNING) this.learningAutomata = new LearningAutomata(random, this);
     }
 
     /**
@@ -55,8 +48,6 @@ public abstract class Heuristic {
         moves.add(move);
         moves.sort((a, b) -> -Integer.compare(a.getPriority(), b.getPriority()));
         sumWeights += move.getPriority();
-
-        if (USE_LEARNING) learningAutomata.initProbabilities(getMoves());
     }
 
     /**
@@ -109,33 +100,10 @@ public abstract class Heuristic {
      * @return a randomly selected move (neighborhood), considering the provided weights.
      */
     protected Move selectMove(Solution solution) {
-        if (USE_LEARNING) {
-            Move move = moves.get(learningAutomata.nextAction());
-            while (!move.hasMove(solution))
-                move = moves.get(learningAutomata.nextAction());
-            return move;
-        }
-        else {
-            Move move = moves.get(random.nextInt(moves.size()));
-            while (!move.hasMove(solution))
-                move = moves.get(random.nextInt(moves.size()));
-            return move;
-
-            //Move selectedMove = null;
-            //do {
-            //    int w = random.nextInt(sumWeights);
-            //
-            //    for (Move move : moves) {
-            //        if (w < move.getPriority()) {
-            //            selectedMove = move;
-            //            break;
-            //        }
-            //        w -= move.getPriority();
-            //    }
-            //} while (selectedMove == null || !selectedMove.hasMove(solution));
-            //
-            //return selectedMove;
-        }
+        Move move = moves.get(random.nextInt(moves.size()));
+        while (!move.hasMove(solution))
+            move = moves.get(random.nextInt(moves.size()));
+        return move;
     }
 
 

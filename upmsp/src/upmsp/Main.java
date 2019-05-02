@@ -32,22 +32,10 @@ public class Main {
 
     public static int bestKnown = Integer.MAX_VALUE;
 
-    // ILS
-    public static long rnaMax = 9000000;
-    public static int itersP = 700;
-    public static int p0 = 80;
-    public static int pMax = 6;
-
-    // LAHC
-    public static int listSize = ( int ) 1000;
-
     // SA (Simulated Annealing)
     public static double alpha = 0.99;
     public static int saMax = ( int ) 1e7;
     public static double t0 = 1;
-
-    // SCHC
-    public static int stepSize = 1000;
 
     // Neighborhoods
     public static boolean neighborhoods[];
@@ -75,26 +63,8 @@ public class Main {
 
         Heuristic solver;
         switch (algorithm) {
-            case "lahc":
-                solver = new LAHC(problem, random, listSize);
-                break;
-            case "lahc-ils":
-                solver = new ILS(problem, random, new LAHC(problem, random, listSize), rnaMax, itersP, p0, pMax);
-                break;
-            case "ils":
-                solver = new ILS(problem, random, rnaMax, itersP, p0, pMax);
-                break;
             case "sa":
                 solver = new SA(problem, random, alpha, t0, saMax);
-                break;
-            case "sa-ils":
-                solver = new ILS(problem, random, new SA(problem, random, alpha, t0, saMax), rnaMax, itersP, p0, pMax);
-                break;
-            case "schc":
-                solver = new SCHC(problem, random, stepSize);
-                break;
-            case "schc-ils":
-                solver = new ILS(problem, random, new SCHC(problem, random, stepSize), rnaMax, itersP, p0, pMax);
                 break;
             default:
                 System.exit(-1);
@@ -176,23 +146,6 @@ public class Main {
         if (neighborhoods[++index]) solver.addMove(new TwoShiftSmart(problem, random, 1, true));
         if (neighborhoods[++index]) solver.addMove(new TwoShiftSmart(problem, random, 1, false));
 
-        // creating and adding compound move 2-Swap
-        //CompoundedMove swap2 = new CompoundedMove(problem, random, "2-Swap(mk)", 1);
-        //swap2.addMove(new Swap(problem, random, 1, true));
-        //swap2.addMove(new Swap(problem, random, 1, true));
-        //solver.addMove(swap2);
-
-        // creating and adding compound move 2-TaskMove
-        //CompoundedMove taskMove2 = new CompoundedMove(problem, random, "2-TaskMove(mk)", 1);
-        //taskMove2.addMove(new TaskMove(problem, random, 1, true));
-        //taskMove2.addMove(new TaskMove(problem, random, 1, true));
-        //solver.addMove(taskMove2);
-
-        // creating and adding compound move 2-Shift
-        //CompoundedMove shift2 = new CompoundedMove(problem, random, "2-Shift(mk)", 1);
-        //shift2.addMove(new Shift(problem, random, 1, true));
-        //shift2.addMove(new Shift(problem, random, 1, true));
-        //solver.addMove(shift2);
     }
 
     /**
@@ -204,28 +157,16 @@ public class Main {
         System.out.println("    <output> : Path of the (output) solution file.");
         System.out.println();
         System.out.println("Options:");
-        System.out.println("    -algorithm <algorithm> : ils, lahc, lahc-ils, sa, sa-ils, schc or schc-ils (default: " + algorithm + ").");
+        System.out.println("    -algorithm <algorithm> : sa (default: " + algorithm + ").");
         System.out.println("    -bestKnown <makespan>  : best known makespan for RDP output (default: " + bestKnown + ").");
         System.out.println("    -seed <seed>           : random seed (default: " + seed + ").");
         System.out.println("    -maxIters <maxIters>   : maximum number of consecutive rejections (default: Long.MAXVALUE).");
         System.out.println("    -time <timeLimit>      : time limit in seconds (default: " + timeLimit + ").");
         System.out.println();
-        System.out.println("    ILS parameters:");
-        System.out.println("        -rnamax <rnamax> : maximum rejected iterations in the descent phase of ILS (default: " + rnaMax + ").");
-        System.out.println("        -itersP <itersP> : number of iterations per perturbation level for ILS (default: " + itersP + ").");
-        System.out.println("        -p0 <p0>         : initial perturbation level for ILS (default: " + p0 + ").");
-        System.out.println("        -pMax <pMax>     : maximum steps up (each step of value p0) for ILS perturbation's level (default: " + pMax + ").");
-        System.out.println();
-        System.out.println("    LAHC parameters:");
-        System.out.println("        -listSize <listSize> : LAHC list size  (default: " + listSize + ").");
-        System.out.println();
         System.out.println("    SA parameters:");
         System.out.println("        -alpha <alpha> : cooling rate for the Simulated Annealing (default: " + alpha + ").");
         System.out.println("        -samax <samax> : iterations before updating the temperature for Simulated Annealing (default: " + saMax + ").");
         System.out.println("        -t0 <t0>       : initial temperature for the Simulated Annealing (default: " + t0 + ").");
-        System.out.println();
-        System.out.println("    SCHC parameters:");
-        System.out.println("        -stepSize <stepSize> : SCHC step size (default: " + stepSize + ").");
         System.out.println();
         System.out.println("    Neighborhoods selection:");
         System.out.println("        -n <id,policy,value> : disables a policy(0..3) for neighborhood id(0..5) if value = 0 and enables it otherwise.");
@@ -273,25 +214,6 @@ public class Main {
                     bestKnown = Integer.parseInt(args[++index]);
                     break;
 
-                // ILS
-                case "-rnamax":
-                    rnaMax = Long.parseLong(args[++index]);
-                    break;
-                case "-itersp":
-                    itersP = Integer.parseInt(args[++index]);
-                    break;
-                case "-p0":
-                    p0 = Integer.parseInt(args[++index]);
-                    break;
-                case "-pmax":
-                    pMax = Integer.parseInt(args[++index]);
-                    break;
-
-                // LAHC
-                case "-listsize":
-                    listSize = Integer.parseInt(args[++index]);
-                    break;
-
                 // SA
                 case "-alpha":
                     alpha = Double.parseDouble(args[++index]);
@@ -301,11 +223,6 @@ public class Main {
                     break;
                 case "-t0":
                     t0 = Double.parseDouble(args[++index]);
-                    break;
-
-                // SCHC
-                case "-stepsize":
-                    stepSize = Integer.parseInt(args[++index]);
                     break;
 
                 // Neighborhoods selection
