@@ -1,26 +1,52 @@
 subprojects {
+
+    // Plugins
     apply plugin: 'idea'
     apply plugin: 'java'
 
+    // Set source path
     sourceSets.main.java.srcDir 'src'
+
 }
 
 project(':upmsp') {
+
+    // Project properties
+    group 'br.ufmg.orcslab'
+    version '1.0.0'
+
+    // Java version
+    sourceCompatibility = 1.8
+
+    // Configure repositories
     repositories {
         mavenCentral()
     }
+
+    // Dependencies
     dependencies {
         compile 'org.apache.commons:commons-math3:3.5'
     }
+
+    // Configure JAR to embed dependencies
     jar {
+        
+        baseName = 'upmsp'
+        classifier = null
+        version = null
         destinationDir = file("$rootDir")
+        
         manifest {
-            attributes 'Main-Class': 'upmsp.Main'
+            attributes(
+                    'Main-Class': 'upmsp.Main')
         }
+        
         from {
             configurations.runtime.collect {
                 it.isDirectory() ? it : zipTree(it)
             }
         }
+        
     }
+
 }
