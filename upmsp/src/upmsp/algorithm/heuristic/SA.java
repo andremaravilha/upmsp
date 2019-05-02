@@ -19,8 +19,9 @@ public class SA extends Heuristic {
     /**
      * SA parameters.
      */
-    private double alpha, t0;
-    private int saMax = 10000;
+    private double alpha;
+    private double t0;
+    private int saMax;
 
     private final static double EPS = 1e-6;
 
@@ -120,25 +121,4 @@ public class SA extends Heuristic {
           alpha, Util.longToString(saMax), Util.longToString(( long ) t0));
     }
 
-
-    private void estimateT0(Solution initialSolution, int nNeighbors, double ratio) {
-        //Solution solution = initialSolution.clone();
-        //List<Integer> neighborValues = new ArrayList<>(nNeighbors);
-        //
-        //for (int i = 0; i < nNeighbors; i++) {
-        //    Move move = selectMove(solution);
-        //    int delta = move.doMove(solution);
-        //
-        //    neighborValues.add(delta);
-        //}
-        //neighborValues.sort(Integer::compare);
-        //
-        //int t = 1;
-        //int
-        //
-        //int idealDelta = neighborValues.get(( int ) (nNeighbors * ratio));
-        //1/FastMath.log(delta / temperature);
-        //
-        //1/ratio
-    }
 }

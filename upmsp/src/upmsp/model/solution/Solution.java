@@ -8,9 +8,10 @@ import java.nio.file.*;
 
 /**
  * This class represents a Solution of the Unrelated Parallel Machine Scheduling
- * Problem..
+ * Problem.
  *
  * @author Tulio Toffolo
+ * @author Andre L. Maravilha
  */
 public class Solution {
 
@@ -134,7 +135,7 @@ public class Solution {
         int makespanValue = 0, makespanMachineId = 0;
         for (Machine machine : machines) {
             if (machine.getNJobs() > 0) {
-                int machineMakespanValue = problem.processTimes[machine.id][machine.jobs[0]];
+                int machineMakespanValue = problem.initialSetupTimes[machine.id][machine.jobs[0]] + problem.processTimes[machine.id][machine.jobs[0]];
                 for (int i = 1; i < machine.getNJobs(); i++)
                     machineMakespanValue += problem.setupTimes[machine.id][machine.jobs[i - 1]][machine.jobs[i]] + problem.processTimes[machine.id][machine.jobs[i]];
 
@@ -167,11 +168,11 @@ public class Solution {
     /**
      * Writes the solution to a file.
      *
-     * @param filePath the output file path.
+     * @param path the output file path.
      * @throws IOException in case any IO error occurs.
      */
-    public void write(String filePath) throws IOException {
-        PrintWriter writer = new PrintWriter(Files.newBufferedWriter(Paths.get(filePath)));
+    public void write(Path path) throws IOException {
+        PrintWriter writer = new PrintWriter(Files.newBufferedWriter(path));
 
         writer.printf("%d\n", problem.nMachines);
         for (Machine machine : machines) {

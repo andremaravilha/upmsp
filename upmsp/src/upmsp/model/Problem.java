@@ -9,6 +9,7 @@ import java.nio.file.*;
  * This class represents an Unrelated Parallel Machine Scheduling Problem.
  *
  * @author Tulio Toffolo
+ * @author Andre L. Maravilha
  */
 public class Problem {
 
@@ -34,6 +35,12 @@ public class Problem {
      */
     public final int setupTimes[][][];
 
+    /***
+     * Matrix with initial setup times for scheduling a job i as the first job
+     * processed by a certain machine: initialSetupTimes[machine][job_i]
+     */
+    public final int initialSetupTimes[][];
+
 
     /**
      * Instantiates a new Problem from a file.
@@ -52,6 +59,7 @@ public class Problem {
         // initializing arrays
         processTimes = new int[nMachines][nJobs];
         setupTimes = new int[nMachines][nJobs][nJobs];
+        initialSetupTimes = new int[nMachines][nJobs];
 
         // skip next line
         reader.readLine();
@@ -72,12 +80,20 @@ public class Problem {
 
         // reading setupTimes times
         for (int machine = 0; machine < nMachines; machine++) {
+
             // skip machine line
             reader.readLine();
+
             for (int job = 0; job < nJobs; job++) {
                 token = new SimpleTokenizer(reader.readLine());
                 for (int nextJob = 0; nextJob < nJobs; nextJob++) {
-                    setupTimes[machine][job][nextJob] = token.nextInt();
+
+                    if (job != nextJob) {
+                        setupTimes[machine][job][nextJob] = token.nextInt();
+                    } else {
+                        initialSetupTimes[machine][job] = token.nextInt();
+                        setupTimes[machine][job][nextJob] = 0;
+                    }
 
                     assert job != nextJob || setupTimes[machine][job][nextJob] == 0 : "setup between equal jobs must be zero";
                 }

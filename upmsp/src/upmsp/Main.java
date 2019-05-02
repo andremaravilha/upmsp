@@ -8,6 +8,7 @@ import upmsp.model.solution.*;
 import upmsp.util.*;
 
 import java.io.*;
+import java.nio.file.Paths;
 import java.util.*;
 
 /**
@@ -110,7 +111,7 @@ public class Main {
         System.out.printf("N. of Iterations..: %d\n", solver.getNIters());
         System.out.printf("Total runtime.....: %.2fs\n", (System.currentTimeMillis() - startTimeMillis) / 1000.0);
 
-        solution.write(outFile);
+        solution.write(Paths.get(outFile));
     }
 
     private static void createNeighborhoods(Problem problem, Random random, Heuristic solver) {

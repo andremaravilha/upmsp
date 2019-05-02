@@ -8,6 +8,7 @@ import java.io.*;
  * This class represents a Machine.
  *
  * @author Tulio Toffolo
+ * @author Andre L. Maravilha
  */
 public class Machine {
 
@@ -20,6 +21,7 @@ public class Machine {
     private int makespan;
 
     private final int process[];
+    private final int initialSetup[];
     private final int setup[][];
 
 
@@ -34,6 +36,7 @@ public class Machine {
         this.id = id;
 
         process = solution.problem.processTimes[id];
+        initialSetup = solution.problem.initialSetupTimes[id];
         setup = solution.problem.setupTimes[id];
 
         jobs = new int[solution.problem.nJobs];
@@ -147,7 +150,7 @@ public class Machine {
         boolean valid = true;
 
         if (nJobs > 0) {
-            int makespanValue = process[jobs[0]];
+            int makespanValue = initialSetup[jobs[0]] + process[jobs[0]];
             for (int i = 1; i < nJobs; i++)
                 makespanValue += setup[jobs[i - 1]][jobs[i]] + process[jobs[i]];
 
@@ -175,17 +178,18 @@ public class Machine {
         assert index <= nJobs : "adding job to an invalid index in machine" + id;
 
         if (nJobs == 0) {
-            return process[job];
+            return initialSetup[job] + process[job];
         }
         else if (index == 0) {
-            return setup[job][jobs[index]] + process[job];
+            return -initialSetup[jobs[index]]
+                    + initialSetup[job] + process[job] + setup[job][jobs[index]];
         }
         else if (index == nJobs) {
             return setup[jobs[index - 1]][job] + process[job];
         }
         else {
             return -setup[jobs[index - 1]][jobs[index]]
-              + setup[jobs[index - 1]][job] + process[job] + setup[job][jobs[index]];
+                    + setup[jobs[index - 1]][job] + process[job] + setup[job][jobs[index]];
         }
     }
 
@@ -200,11 +204,12 @@ public class Machine {
         assert index < nJobs : "deleting job from an invalid index in machine" + id;
 
         if (nJobs == 1) {
-            assert makespan == process[jobs[index]] : String.format("%d vs %d\n", makespan, process[jobs[index]]);
+            assert makespan == initialSetup[jobs[index]] + process[jobs[index]] : String.format("%d vs %d\n", makespan, process[jobs[index]]);
             return -makespan;
         }
         else if (index == 0) {
-            return -(setup[jobs[index]][jobs[index + 1]] + process[jobs[index]]);
+            return -(initialSetup[jobs[index]] + process[jobs[index]] + setup[jobs[index]][jobs[index + 1]])
+                    + initialSetup[jobs[index + 1]];
         }
         else if (index == nJobs - 1) {
             return -(setup[jobs[index - 1]][jobs[index]] + process[jobs[index]]);
@@ -224,14 +229,15 @@ public class Machine {
      * @return the delta makespan
      */
     public int getDeltaCostSetJob(int job, int index) {
-        assert index < nJobs : "set≈ting job of an invalid index in machine" + id;
+        assert index < nJobs : "setting job of an invalid index in machine" + id;
 
         if (nJobs == 1) {
-            return -process[jobs[index]] + process[job];
+            return -(initialSetup[jobs[index]] + process[jobs[index]])
+                    + initialSetup[job] + process[job];
         }
         else if (index == 0) {
-            return -(setup[jobs[index]][jobs[index + 1]] + process[jobs[index]])
-              + (setup[job][jobs[index + 1]] + process[job]);
+            return -(initialSetup[jobs[index]] + process[jobs[index]] + setup[jobs[index]][jobs[index + 1]])
+              + (initialSetup[job] + process[job] + setup[job][jobs[index + 1]]);
         }
         else if (index == nJobs - 1) {
             return -(setup[jobs[index - 1]][jobs[index]] + process[jobs[index]])
