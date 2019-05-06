@@ -59,7 +59,6 @@ public class SA extends Heuristic {
         Solution solution = initialSolution.clone();
 
         double temperature = this.t0;
-        int nItersWithoutImprovement = 0;
         int itersInTemperature = 0;
 
         while (System.currentTimeMillis() < finalTimeMillis) {
@@ -69,7 +68,6 @@ public class SA extends Heuristic {
             // if solution is improved...
             if (delta < 0) {
                 acceptMove(move);
-                nItersWithoutImprovement = 0;
 
                 if (solution.getCost() < bestSolution.getCost()) {
                     bestSolution = solution.clone();

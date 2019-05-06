@@ -25,6 +25,7 @@ project(':upmsp') {
 
     // Dependencies
     dependencies {
+        compile 'info.picocli:picocli:3.9.6'
         compile 'org.apache.commons:commons-math3:3.5'
     }
 

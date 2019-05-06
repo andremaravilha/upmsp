@@ -89,7 +89,7 @@ public class Util {
      */
     public static void safePrintText(PrintStream output, String text, String special) {
         if (output != null) {
-            output.printf("    | %-40s | %10.2f | %s\n", text, (System.currentTimeMillis() - Main.startTimeMillis) / 1000.0, special);
+//            output.printf("    | %-40s | %10.2f | %s\n", text, (System.currentTimeMillis() - Main.startTimeMillis) / 1000.0, special);
         }
     }
 }
