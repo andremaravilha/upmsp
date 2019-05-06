@@ -27,7 +27,7 @@ public class SimpleSwap extends Move {
      * @param useMakespanMachine true if the makespan machine should be always considered or false otherwise.
      */
     public SimpleSwap(Problem problem, Random random, int priority, boolean useMakespanMachine) {
-        super(problem, random, "SimpSwap" + (useMakespanMachine ? "(mk)" : ""), priority);
+        super(problem, random, "Direct-Swap" + (useMakespanMachine ? "(mk)" : ""), priority);
         this.useMakespanMachine = useMakespanMachine;
     }
 

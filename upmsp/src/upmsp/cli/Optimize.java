@@ -190,35 +190,42 @@ public class Optimize implements Callable<Void> {
         long runtime = 0L;
         if (heuristic.getMoves().size() > 0) {
             runtime = System.currentTimeMillis();
-            heuristic.run(solution, timeLimit, iterationsLimit, (verbose ? System.out : null));
+            solution = heuristic.run(solution, timeLimit, iterationsLimit, (verbose ? System.out : null));
             runtime = System.currentTimeMillis() - runtime;
         }
 
         // Check feasibility
         ByteArrayOutputStream feasibilityInfo = new ByteArrayOutputStream();
         PrintStream stream = new PrintStream(feasibilityInfo, true, "UTF-8");
-        boolean feasibility = solution.validate((verbose ? stream : null));
+        boolean feasible = solution.validate((verbose ? stream : null));
 
         // Log (if verbose)
         if (verbose) {
             System.out.printf("+--------------+---------------+---------------+--------------+\n\n");
 
             // Neighborhood stats
-            System.out.printf("+---------------------------------------------------------------------------------+\n");
-            System.out.printf("|                             Neighborhoods statistics                            |\n");
-            System.out.printf("+---------------------------------------------------------------------------------+\n");
-            System.out.printf("|         Move         |     Calls    | Improvs. | Sideways |  Accepts |  Rejects |\n");
-            System.out.printf("+----------------------+--------------+----------+----------+----------+----------+\n");
+            System.out.printf("+----------------------------------------------------------------------------------+\n");
+            System.out.printf("|                             Neighborhoods statistics                             |\n");
+            System.out.printf("+-----------------------+--------------+----------+----------+----------+----------+\n");
+            System.out.printf("|          Move         |     Calls    | Improvs. | Sideways |  Accepts |  Rejects |\n");
+            System.out.printf("+-----------------------+--------------+----------+----------+----------+----------+\n");
 
             for (Move move : heuristic.getMoves()) {
                 Util.safePrintMoveStatistics(System.out, move, "");
             }
 
-            System.out.printf("+----------------------+--------------+----------+----------+----------+----------+\n\n");
+            System.out.printf("+-----------------------+--------------+----------+----------+----------+----------+\n\n");
+
+            // Feasibility info
+            if (feasible) {
+                System.out.printf("Feasible solution found!\n\n");
+            } else {
+                System.out.printf("Solution is infeasible:\n%s\n",
+                        new String(feasibilityInfo.toByteArray(), StandardCharsets.UTF_8));
+            }
 
             // General info
             System.out.printf("Best makespan......: %d\n", solution.getCost());
-            System.out.printf("Feasibility........: %s\n", (feasibility ? "Ok" : new String(feasibilityInfo.toByteArray(), StandardCharsets.UTF_8)));
             System.out.printf("N. of iterations...: %d\n", heuristic.getNIters());
             System.out.printf("Total runtime (s)..: %.4fs\n\n", (initialSolutionRuntime + runtime) / 1000.0);
         }

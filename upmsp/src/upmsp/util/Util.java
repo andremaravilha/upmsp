@@ -49,7 +49,7 @@ public class Util {
      */
     public static void safePrintMoveStatistics(PrintStream output, Move move, String special) {
         if (output != null) {
-            output.printf("| %-20s | %12s | %7.2f%% | %7.2f%% | %7.2f%% | %7.2f%% |\n",
+            output.printf("| %-21s | %12s | %7.2f%% | %7.2f%% | %7.2f%% | %7.2f%% |\n",
                     move.name,
                     longToString(move.getNIters()),
                     100.0 * (move.getNImprovements() / (double) move.getNIters()),

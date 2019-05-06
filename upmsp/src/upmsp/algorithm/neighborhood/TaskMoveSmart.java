@@ -27,7 +27,7 @@ public class TaskMoveSmart extends Move {
      * @param useMakespanMachine the use makespan machine
      */
     public TaskMoveSmart(Problem problem, Random random, int priority, boolean useMakespanMachine) {
-        super(problem, random, "TaskMoveSmart" + (useMakespanMachine ? "(mk)" : ""), priority);
+        super(problem, random, "Task-Move Smart" + (useMakespanMachine ? "(mk)" : ""), priority);
         this.useMakespanMachine = useMakespanMachine;
     }
 

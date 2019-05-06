@@ -28,7 +28,7 @@ public class TwoShiftSmart extends Move {
      * @param useMakespanMachine true if the makespan machine should be always considered or false otherwise.
      */
     public TwoShiftSmart(Problem problem, Random random, int priority, boolean useMakespanMachine) {
-        super(problem, random, "2-ShiftSmart" + (useMakespanMachine ? "(mk)" : ""), priority);
+        super(problem, random, "2-Shift Smart" + (useMakespanMachine ? "(mk)" : ""), priority);
         this.useMakespanMachine = useMakespanMachine;
     }
 
