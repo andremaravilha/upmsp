@@ -12,9 +12,6 @@ import java.util.Locale;
  */
 public class Main {
 
-    public static long startTimeMillis = System.currentTimeMillis();
-    public static int bestKnown = Integer.MAX_VALUE;
-
     public static void main(String[] args) {
 
         // Set locale

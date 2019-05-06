@@ -1,7 +1,6 @@
 package upmsp.algorithm.heuristic;
 
 import org.apache.commons.math3.util.FastMath;
-import upmsp.Main;
 import upmsp.algorithm.neighborhood.Move;
 import upmsp.algorithm.utility.UtilityModel;
 import upmsp.model.Problem;
@@ -71,7 +70,7 @@ public class AdaptiveSA extends Heuristic {
      */
     public Solution run(Solution initialSolution, long timeLimitMillis, long maxIters, PrintStream output) {
 
-        long startTimeMillis = Main.startTimeMillis;
+        long startTimeMillis = System.currentTimeMillis();
         long finalTimeMillis = startTimeMillis + timeLimitMillis;
 
         bestSolution = initialSolution;
@@ -97,7 +96,7 @@ public class AdaptiveSA extends Heuristic {
 
                 if (solution.getCost() < bestSolution.getCost()) {
                     bestSolution = solution.clone();
-                    Util.safePrintStatus(output, nIters, bestSolution, solution, "*");
+                    Util.safePrintStatus(output, nIters, bestSolution, solution, System.currentTimeMillis() - startTimeMillis, "*");
                 }
             }
 
@@ -125,7 +124,7 @@ public class AdaptiveSA extends Heuristic {
                 temperature = alpha * temperature;
                 if (temperature < EPS) {
                     temperature = t0;
-                    Util.safePrintText(output, "Re-heating Simulated Annealing", "");
+                    Util.safePrintText(output, "Re-heating Simulated Annealing");
                 }
             }
 
@@ -149,8 +148,8 @@ public class AdaptiveSA extends Heuristic {
      * @return the string representation of this heuristic (with parameters values).
      */
     public String toString() {
-        return String.format("Adaptive Simulated Annealing (alpha=%.3f, saMax=%s, t0=%s)",
-          alpha, Util.longToString(saMax), Util.longToString(( long ) t0));
+        return String.format("Adaptive Simulated Annealing (cooling-rate=%.3f, iterations-per-temp=%s, initial-temp=%s, max-prob=%.2f, update-freq=%s)",
+          alpha, Util.longToString(saMax), Util.longToString((long) t0), maxProbability, Util.longToString(updateFrequency));
     }
 
     /**

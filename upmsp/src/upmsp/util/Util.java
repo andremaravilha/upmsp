@@ -10,6 +10,7 @@ import java.io.*;
  * Simple class with some util methods.
  *
  * @author Tulio Toffolo
+ * @author Andre L. Maravilha
  */
 public class Util {
 
@@ -48,13 +49,13 @@ public class Util {
      */
     public static void safePrintMoveStatistics(PrintStream output, Move move, String special) {
         if (output != null) {
-            output.printf("    | %-18s | %8s | %8s | %8s | %8s |\n",
-              move.name,
-              longToString(move.getNImprovements()),
-              longToString(move.getNSideways()),
-              longToString(move.getNAccepts()),
-              longToString(move.getNRejects())
-            );
+            output.printf("| %-20s | %12s | %7.2f%% | %7.2f%% | %7.2f%% | %7.2f%% |\n",
+                    move.name,
+                    longToString(move.getNIters()),
+                    100.0 * (move.getNImprovements() / (double) move.getNIters()),
+                    100.0 * (move.getNSideways() / (double) move.getNIters()),
+                    100.0 * (move.getNAccepts() / (double) move.getNIters()),
+                    100.0 * (move.getNRejects() / (double) move.getNIters()));
         }
     }
 
@@ -68,28 +69,27 @@ public class Util {
      * @param solution     the current solution object.
      * @param special      some informative String to print after the row.
      */
-    public static void safePrintStatus(PrintStream output, long nIters, Solution bestSolution, Solution solution, String special) {
+    public static void safePrintStatus(PrintStream output, long nIters, Solution bestSolution, Solution solution, long timeMillis, String special) {
         if (output != null) {
-            output.printf("    | %8s | %8s | %8d | %8d | %10.2f | %s\n",
-              longToString(nIters),
-              Main.bestKnown == Integer.MAX_VALUE ? "-" : String.format("%8.2f",
-                100. * ( double ) (solution.getCost() - Main.bestKnown) / ( double ) Main.bestKnown),
-              bestSolution.getCost(), solution.getCost(),
-              (System.currentTimeMillis() - Main.startTimeMillis) / 1000.0, special
-            );
+            output.printf("| %s %10s | %13d | %13d | %12.2f |\n",
+                    special,
+                    longToString(nIters),
+                    bestSolution.getCost(),
+                    solution.getCost(),
+                    timeMillis / 1000.0);
         }
     }
 
     /**
-     * Prints the text maintaining the table style,after checking that the PrintStream is not null.
+     * Prints the text maintaining the table style, after checking that the PrintStream is not null.
      *
      * @param output  the output stream.
      * @param text    text to print inside the table.
-     * @param special some informative String to print after the row.
      */
-    public static void safePrintText(PrintStream output, String text, String special) {
+    public static void safePrintText(PrintStream output, String text) {
         if (output != null) {
-//            output.printf("    | %-40s | %10.2f | %s\n", text, (System.currentTimeMillis() - Main.startTimeMillis) / 1000.0, special);
+            output.printf("%s\n", text);
         }
     }
+
 }

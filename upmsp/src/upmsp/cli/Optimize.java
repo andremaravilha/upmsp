@@ -14,8 +14,8 @@ import upmsp.model.Problem;
 import upmsp.model.solution.Solution;
 import upmsp.util.Util;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -163,51 +163,64 @@ public class Optimize implements Callable<Void> {
             timeLimit = (long) (problem.nJobs * (problem.nMachines / 2.0) * 30);
         }
 
+        // Log (if verbose)
         if (verbose) {
-            System.out.printf("Instance....: %s\n", input.getName());
-            System.out.printf("Algorithm...: %s\n", heuristic);
-            System.out.printf("Other params: maxIters=%s, seed=%d, timeLimit=%.2fs\n\n", Util.longToString(iterationsLimit), seed, timeLimit / 1000.0);
-            System.out.printf("    /--------------------------------------------------------\\\n");
-            System.out.printf("    | %8s | %8s | %8s | %8s | %10s | %s\n", "Iter", "RDP(%)", "S*", "S'", "Time", "");
-            System.out.printf("    |----------|----------|----------|----------|------------|\n");
+
+            System.out.printf("\n");
+            System.out.printf("Instance......: %s\n", input.getName());
+            System.out.printf("Algorithm.....: %s\n", heuristic);
+            System.out.printf("Other params..: seed=%d, iterations-limit=%s, time-limit=%.2fs\n\n", seed, Util.longToString(iterationsLimit), timeLimit / 1000.0);
+
+            System.out.printf("+-------------------------------------------------------------+\n");
+            System.out.printf("|                    Optimization progress                    |\n");
+            System.out.printf("+--------------+---------------+---------------+--------------+\n");
+            System.out.printf("|   Iteration  |   Incumbent   |    Current    |   Time (s)   |\n");
+            System.out.printf("+--------------+---------------+---------------+--------------+\n");
         }
 
-        // Set value of objective function of the best known solution (if known)
-        Main.bestKnown = bestKnown;
-
-        // Set start time
-        Main.startTimeMillis = System.currentTimeMillis();
-
         // Create initial solution
+        long initialSolutionRuntime = System.currentTimeMillis();
         Solution solution = SimpleConstructive.randomSolution(problem, random);
+        initialSolutionRuntime = System.currentTimeMillis() - initialSolutionRuntime;
+
+        // Subtract time spent with creation of an initial solution
+        timeLimit = timeLimit - initialSolutionRuntime;
 
         // Run heuristic
+        long runtime = 0L;
         if (heuristic.getMoves().size() > 0) {
+            runtime = System.currentTimeMillis();
             heuristic.run(solution, timeLimit, iterationsLimit, (verbose ? System.out : null));
+            runtime = System.currentTimeMillis() - runtime;
         }
 
         // Check feasibility
-        boolean feasibility = solution.validate((verbose ? System.out : null));
+        ByteArrayOutputStream feasibilityInfo = new ByteArrayOutputStream();
+        PrintStream stream = new PrintStream(feasibilityInfo, true, "UTF-8");
+        boolean feasibility = solution.validate((verbose ? stream : null));
 
+        // Log (if verbose)
         if (verbose) {
-            System.out.printf("    \\--------------------------------------------------------/\n\n");
+            System.out.printf("+--------------+---------------+---------------+--------------+\n\n");
 
-            System.out.printf("Neighborhoods statistics (values in %%):\n\n");
-            System.out.printf("    /----------------------------------------------------------------\\\n");
-            System.out.printf("    | %-18s | %8s | %8s | %8s | %8s |\n", "Move", "Improvs.", "Sideways", "Accepts", "Rejects");
-            System.out.printf("    |--------------------|----------|----------|----------|----------|\n");
+            // Neighborhood stats
+            System.out.printf("+---------------------------------------------------------------------------------+\n");
+            System.out.printf("|                             Neighborhoods statistics                            |\n");
+            System.out.printf("+---------------------------------------------------------------------------------+\n");
+            System.out.printf("|         Move         |     Calls    | Improvs. | Sideways |  Accepts |  Rejects |\n");
+            System.out.printf("+----------------------+--------------+----------+----------+----------+----------+\n");
 
             for (Move move : heuristic.getMoves()) {
                 Util.safePrintMoveStatistics(System.out, move, "");
             }
-            System.out.printf("    \\----------------------------------------------------------------/\n\n");
 
-            if (Main.bestKnown != Integer.MAX_VALUE) {
-                System.out.printf("Best RDP..........: %.4f%%\n", 100 * (double) (solution.getCost() - Main.bestKnown) / (double) Main.bestKnown);
-            }
-            System.out.printf("Best makespan.....: %d\n", solution.getCost());
-            System.out.printf("N. of Iterations..: %d\n", heuristic.getNIters());
-            System.out.printf("Total runtime.....: %.2fs\n", (System.currentTimeMillis() - Main.startTimeMillis) / 1000.0);
+            System.out.printf("+----------------------+--------------+----------+----------+----------+----------+\n\n");
+
+            // General info
+            System.out.printf("Best makespan......: %d\n", solution.getCost());
+            System.out.printf("Feasibility........: %s\n", (feasibility ? "Ok" : new String(feasibilityInfo.toByteArray(), StandardCharsets.UTF_8)));
+            System.out.printf("N. of iterations...: %d\n", heuristic.getNIters());
+            System.out.printf("Total runtime (s)..: %.4fs\n\n", (initialSolutionRuntime + runtime) / 1000.0);
         }
 
         // Save best solution found

@@ -53,7 +53,9 @@ public class SA extends Heuristic {
      * @return the best solution encountered by the SA.
      */
     public Solution run(Solution initialSolution, long timeLimitMillis, long maxIters, PrintStream output) {
-        long finalTimeMillis = System.currentTimeMillis() + timeLimitMillis;
+
+        long startTimeMillis = System.currentTimeMillis();
+        long finalTimeMillis = startTimeMillis + timeLimitMillis;
 
         bestSolution = initialSolution;
         Solution solution = initialSolution.clone();
@@ -71,7 +73,7 @@ public class SA extends Heuristic {
 
                 if (solution.getCost() < bestSolution.getCost()) {
                     bestSolution = solution.clone();
-                    Util.safePrintStatus(output, nIters, bestSolution, solution, "*");
+                    Util.safePrintStatus(output, nIters, bestSolution, solution, System.currentTimeMillis() - startTimeMillis, "*");
                 }
             }
 
@@ -99,7 +101,7 @@ public class SA extends Heuristic {
                 temperature = alpha * temperature;
                 if (temperature < EPS) {
                     temperature = t0;
-                    Util.safePrintText(output, "Re-heating Simulated Annealing", "");
+                    Util.safePrintText(output, "Re-heating Simulated Annealing");
                 }
             }
 
@@ -115,7 +117,7 @@ public class SA extends Heuristic {
      * @return the string representation of this heuristic (with parameters values).
      */
     public String toString() {
-        return String.format("Simulated Annealing (alpha=%.3f, saMax=%s, t0=%s)",
+        return String.format("Simulated Annealing (cooling-rate=%.3f, iterations-per-temp=%s, initial-temp=%s)",
           alpha, Util.longToString(saMax), Util.longToString(( long ) t0));
     }
 
