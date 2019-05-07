@@ -3,7 +3,6 @@ package upmsp.cli;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 import picocli.CommandLine.Command;
-import upmsp.Main;
 import upmsp.algorithm.constructive.SimpleConstructive;
 import upmsp.algorithm.heuristic.AdaptiveSA;
 import upmsp.algorithm.heuristic.Heuristic;
@@ -63,9 +62,6 @@ public class Optimize implements Callable<Void> {
 
     @Option(names = {"--disable"}, description = "shift, direct-swap, swap, switch, task-move, two-shift")
     private String[] disabledMoves = new String[0];
-
-    @Option(names = {"--best-known"}, description = "Best known solution to calculate RDP")
-    private int bestKnown = Integer.MAX_VALUE;
 
     @Parameters(index = "0", description = "Path of the problem input file.", arity = "1..1")
     private File input;
@@ -228,6 +224,14 @@ public class Optimize implements Callable<Void> {
             System.out.printf("Best makespan......: %d\n", solution.getCost());
             System.out.printf("N. of iterations...: %d\n", heuristic.getNIters());
             System.out.printf("Total runtime (s)..: %.4fs\n\n", (initialSolutionRuntime + runtime) / 1000.0);
+        }
+
+        // Output for non verbose mode
+        if (!verbose) {
+            System.out.printf("%d %d %d\n",
+                    solution.getCost(),
+                    heuristic.getNIters(),
+                    initialSolutionRuntime + runtime);
         }
 
         // Save best solution found
