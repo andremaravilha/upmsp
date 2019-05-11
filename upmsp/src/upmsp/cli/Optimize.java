@@ -49,7 +49,7 @@ public class Optimize implements Callable<Void> {
     @Option(names = {"--iterations-per-temperature"}, description = "Iterations before update temperature", defaultValue = "1176628")
     private int iterationsPerTemperature;
 
-    @Option(names = {"--coefficients-path"}, description = "Path of the coefficients of the utility model.")
+    @Option(names = {"--coefficients-file"}, description = "Path of the coefficients of the utility model.")
     private File utilityCoefficientsFile;
 
     @Option(names = {"--update-frequency"}, description = "Iterations before update utility values.", defaultValue = "1")
@@ -61,7 +61,7 @@ public class Optimize implements Callable<Void> {
     @Option(names = {"--time-limit"}, description = "Maximum runtime (in milliseconds). If negative, it is set according to the problem size.", defaultValue = "-1")
     private long timeLimit;
 
-    @Option(names = {"--iterations-limit"}, description = "Maximum runtime (in milliseconds). If negative, it is set according to the problem size.")
+    @Option(names = {"--iterations-limit"}, description = "Maximum number of iterations the algorithm can perform.")
     private long iterationsLimit = Long.MAX_VALUE;
 
     @Option(names = {"--disable"}, description = "shift, direct-swap, swap, switch, task-move, two-shift")
