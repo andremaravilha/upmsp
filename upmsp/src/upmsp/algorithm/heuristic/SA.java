@@ -49,10 +49,11 @@ public class SA extends Heuristic {
      * @param initialSolution the initial (input) solution.
      * @param timeLimitMillis the time limit (in milliseconds).
      * @param maxIters        the maximum number of iterations without improvements to execute.
+     * @param callback        callback object.
      * @param output          output PrintStream for logging purposes.
      * @return the best solution encountered by the SA.
      */
-    public Solution run(Solution initialSolution, long timeLimitMillis, long maxIters, PrintStream output) {
+    public Solution run(Solution initialSolution, long timeLimitMillis, long maxIters, Callback callback, PrintStream output) {
 
         long startTimeMillis = System.currentTimeMillis();
         long finalTimeMillis = startTimeMillis + timeLimitMillis;
@@ -60,10 +61,16 @@ public class SA extends Heuristic {
         bestSolution = initialSolution;
         Solution solution = initialSolution.clone();
 
+        // Callback for iteration zero and first incumbent
+        if (callback != null) {
+            callback.onNewIncumbent(bestSolution, null, 0L, timeLimitMillis, 0L, maxIters);
+            callback.onIteration(bestSolution, 0L, timeLimitMillis, 0L, maxIters);
+        }
+
         double temperature = this.t0;
         int itersInTemperature = 0;
 
-        while (System.currentTimeMillis() < finalTimeMillis) {
+        while (System.currentTimeMillis() < finalTimeMillis && nIters < maxIters) {
             Move move = selectMove(solution);
             int delta = move.doMove(solution);
 
@@ -74,6 +81,12 @@ public class SA extends Heuristic {
                 if (solution.getCost() < bestSolution.getCost()) {
                     bestSolution = solution.clone();
                     Util.safePrintStatus(output, nIters, bestSolution, solution, System.currentTimeMillis() - startTimeMillis, "*");
+
+                    // Callback for new incumbent solution
+                    if (callback != null) {
+                        callback.onNewIncumbent(bestSolution, move.getClass(), System.currentTimeMillis() - startTimeMillis, timeLimitMillis, nIters + 1, maxIters);
+                    }
+
                 }
             }
 
@@ -106,6 +119,11 @@ public class SA extends Heuristic {
             }
 
             nIters++;
+
+            // Callback for iteration
+            if (callback != null) {
+                callback.onIteration(bestSolution, System.currentTimeMillis() - startTimeMillis, timeLimitMillis, nIters, maxIters);
+            }
         }
 
         return bestSolution;

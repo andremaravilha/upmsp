@@ -12,6 +12,7 @@ import java.util.*;
  * included.
  *
  * @author Tulio Toffolo
+ * @author Andre L. Maravilha
  */
 public abstract class Heuristic {
 
@@ -87,10 +88,11 @@ public abstract class Heuristic {
      * @param solution        the initial (input) solution.
      * @param timeLimitMillis the time limit in milliseconds.
      * @param maxIters        the maximum number of iterations to execute.
-     * @param output          the output
+     * @param callback        callback object.
+     * @param output          the output.
      * @return the solution
      */
-    public abstract Solution run(Solution solution, long timeLimitMillis, long maxIters, PrintStream output);
+    public abstract Solution run(Solution solution, long timeLimitMillis, long maxIters, Callback callback, PrintStream output);
 
 
     /**
@@ -146,4 +148,33 @@ public abstract class Heuristic {
     }
 
     // endregion getters and setters
+
+
+    /**
+     * Callback interface.
+     */
+    public interface Callback {
+
+        /**
+         * Called when a new incumbent solution is found.
+         * @param incumbent Incumbent solution.
+         * @param move Class of the move that returned the incumbent solution.
+         * @param runtimeMillis Runtime (in milliseconds).
+         * @param timeLimitMillis Time limit (in milliseconds).
+         * @param iteration Iteration.
+         * @param iterationLimit Maximum number of iterations.
+         */
+        void onNewIncumbent(Solution incumbent, Class<? extends Move> move, long runtimeMillis, long timeLimitMillis, long iteration, long iterationLimit);
+
+        /**
+         * Called at the end of an iteration.
+         * @param incumbent Incumbent solution.
+         * @param runtimeMillis Runtime (in milliseconds).
+         * @param timeLimitMillis Time limit (in milliseconds).
+         * @param iteration Iteration.
+         * @param iterationLimit Maximum number of iterations.
+         */
+        void onIteration(Solution incumbent, long runtimeMillis, long timeLimitMillis, long iteration, long iterationLimit);
+
+    }
 }

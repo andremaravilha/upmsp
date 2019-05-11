@@ -22,7 +22,11 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.Callable;
 
-
+/**
+ * Command to solve an instance of the UPMSP.
+ *
+ * @author Andre L. Maravilha
+ */
 @Command(description = "Solve an instance of the UPMS problem.",
         name = "optimize", mixinStandardHelpOptions = true)
 public class Optimize implements Callable<Void> {
@@ -42,7 +46,7 @@ public class Optimize implements Callable<Void> {
     @Option(names = {"--cooling-rate"}, description = "Cooling rate", defaultValue = "0.96")
     private double coolingRate;
 
-    @Option(names = {"--iterations-per-temperature"}, description = "Iterations before update temperature", defaultValue = "1000000")
+    @Option(names = {"--iterations-per-temperature"}, description = "Iterations before update temperature", defaultValue = "1176628")
     private int iterationsPerTemperature;
 
     @Option(names = {"--coefficients-path"}, description = "Path of the coefficients of the utility model.")
@@ -186,7 +190,7 @@ public class Optimize implements Callable<Void> {
         long runtime = 0L;
         if (heuristic.getMoves().size() > 0) {
             runtime = System.currentTimeMillis();
-            solution = heuristic.run(solution, timeLimit, iterationsLimit, (verbose ? System.out : null));
+            solution = heuristic.run(solution, timeLimit, iterationsLimit, null, (verbose ? System.out : null));
             runtime = System.currentTimeMillis() - runtime;
         }
 
