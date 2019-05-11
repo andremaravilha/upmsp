@@ -130,7 +130,7 @@ java -jar upmsp.jar analyze [options] <input> <output>
 
 Examples:  
 ```
-java -jar upmsp-all analyze --instances ./upmsp/instances --verbose
+java -jar upmsp.jar analyze ./instances ./data.csv
 ```
 
 Parameters:  
