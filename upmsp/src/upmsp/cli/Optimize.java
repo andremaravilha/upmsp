@@ -15,11 +15,10 @@ import upmsp.util.Util;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.Callable;
 
 /**
@@ -66,6 +65,9 @@ public class Optimize implements Callable<Void> {
 
     @Option(names = {"--disable"}, description = "shift, direct-swap, swap, switch, task-move, two-shift")
     private String[] disabledMoves = new String[0];
+
+    @Option(names = {"--track"}, description = "Path to the (optional) output file in which makespan of incumbent solutions are tracked.")
+    private File trackFile;
 
     @Parameters(index = "0", description = "Path of the problem input file.", arity = "1..1")
     private File input;
@@ -186,12 +188,23 @@ public class Optimize implements Callable<Void> {
         // Subtract time spent with creation of an initial solution
         timeLimit = timeLimit - initialSolutionRuntime;
 
+        // Callback, if enabled
+        Callback callback = null;
+        if (trackFile != null) {
+            callback = new Callback(problem, input.toPath(), seed);
+        }
+
         // Run heuristic
         long runtime = 0L;
         if (heuristic.getMoves().size() > 0) {
             runtime = System.currentTimeMillis();
-            solution = heuristic.run(solution, timeLimit, iterationsLimit, null, (verbose ? System.out : null));
+            solution = heuristic.run(solution, timeLimit, iterationsLimit, callback, (verbose ? System.out : null));
             runtime = System.currentTimeMillis() - runtime;
+        }
+
+        // Export callback data, if set
+        if (callback != null) {
+            callback.exportToCSV(trackFile.toPath());
         }
 
         // Check feasibility
@@ -245,4 +258,84 @@ public class Optimize implements Callable<Void> {
 
         return null;
     }
+
+
+    /**
+     * Callback class to track the progress of the optimization process.
+     */
+    private static class Callback implements Heuristic.Callback {
+
+        /**
+         * Keep an entry of the track.
+         */
+        private static class Entry {
+
+            public long makespan, timeMillis, iteration;
+            public double timePerc;
+
+            public Entry(long makespan, double timePerc, long timeMillis, long iteration) {
+                this.makespan = makespan;
+                this.timePerc = timePerc;
+                this.timeMillis = timeMillis;
+                this.iteration = iteration;
+            }
+        }
+
+        private String instance;
+        private long n, m, seed;
+        private List<Entry> entries;
+
+        /**
+         * Constructor.
+         * @param problem Reference to the problem.
+         * @param instance Path to the instance file.
+         * @param seed Seed used by the heuristic.
+         */
+        public Callback(Problem problem, Path instance, long seed) {
+            this.entries = new LinkedList<>();
+            this.instance = instance.getFileName().toString().replace(".txt", "");
+            this.seed = seed;
+            this.n = problem.nJobs;
+            this.m = problem.nMachines;
+        }
+
+        @Override
+        public void onNewIncumbent(Solution incumbent, Class<? extends Move> move, long runtimeMillis, long timeLimitMillis, long iteration, long iterationLimit) {
+            this.entries.add(new Entry(incumbent.getCost(), runtimeMillis / (double) timeLimitMillis, runtimeMillis, iteration));
+        }
+
+        @Override
+        public void onIteration(Solution incumbent, long runtimeMillis, long timeLimitMillis, long iteration, long iterationLimit) {
+            // Do nothing.
+        }
+
+        /**
+         * Export data to CSV file.
+         * @param output Path to file in which data should be written.
+         * @throws IOException
+         */
+        public void exportToCSV(Path output) throws IOException {
+
+            // Creates the directory hierarchy, if necessary
+            output = output.toAbsolutePath();
+            Files.createDirectories(output.getParent());
+
+            // Write data to file
+            try (BufferedWriter buffer = Files.newBufferedWriter(output); PrintWriter writer = new PrintWriter(buffer)) {
+                writer.printf("INSTANCE,N,M,SEED,ITERATION,TIME.MILLIS,TIME.PERC,MAKESPAN\n");
+                for (Entry entry : entries) {
+                    writer.printf("%s,%d,%d,%d,%d,%d,%.6f,%d\n",
+                            instance,
+                            n,
+                            m,
+                            seed,
+                            entry.iteration,
+                            entry.timeMillis,
+                            entry.timePerc,
+                            entry.makespan);
+                }
+            }
+        }
+    }
+
 }
