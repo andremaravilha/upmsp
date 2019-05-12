@@ -118,6 +118,10 @@ Maximum probability that can be assigned to the selection of a move.
 `--disable <VALUE>`  
 Disable a move. This parameter may be used more than once to disable multiple moves. Available values are: `shift`, `direct-swap`, `swap`, `switch`, `task-move` and `two-shift`.
 
+`--track <VALUE>`  
+(Optional)  
+Track the values of makespan of incumbent solutions found throughout the optimization process. `VALUE` is the path to the file in which the data should be written.
+
 `--verbose`  
 If used, the algorithm progress is displayed on the screen. Otherwise, only the final result (makespan, number of iterations an total runtime (in nanoseconds) are displayed on the screen at the end of the optimization process.
 
