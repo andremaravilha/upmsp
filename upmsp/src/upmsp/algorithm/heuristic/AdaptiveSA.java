@@ -63,35 +63,35 @@ public class AdaptiveSA extends Heuristic {
      * Executes the Adaptive Simulated Annealing.
      *
      * @param initialSolution the initial (input) solution.
-     * @param timeLimitMillis the time limit (in milliseconds).
+     * @param timeLimitNano   the time limit (in nanoseconds).
      * @param maxIters        the maximum number of iterations without improvements to execute.
      * @param callback        callback object.
      * @param output          output PrintStream for logging purposes.
      * @return the best solution encountered by the SA.
      */
-    public Solution run(Solution initialSolution, long timeLimitMillis, long maxIters, Callback callback, PrintStream output) {
+    public Solution run(Solution initialSolution, long timeLimitNano, long maxIters, Callback callback, PrintStream output) {
 
-        long startTimeMillis = System.currentTimeMillis();
-        long finalTimeMillis = startTimeMillis + timeLimitMillis;
+        long startTimeNano = System.nanoTime();
+        long finalTimeNano = startTimeNano + timeLimitNano;
 
         bestSolution = initialSolution;
         Solution solution = initialSolution.clone();
 
         // Callback for iteration zero and first incumbent
         if (callback != null) {
-            callback.onNewIncumbent(bestSolution, null, 0L, timeLimitMillis, 0L, maxIters);
-            callback.onIteration(bestSolution, 0L, timeLimitMillis, 0L, maxIters);
+            callback.onNewIncumbent(bestSolution, null, 0L, timeLimitNano, 0L, maxIters);
+            callback.onIteration(bestSolution, 0L, timeLimitNano, 0L, maxIters);
         }
 
         // Initialize probabilities assinged to each move
         this.probabilities = new double[moves.size()];
-        updateProbabilities((System.currentTimeMillis() - startTimeMillis) / (double) timeLimitMillis);
+        updateProbabilities((System.nanoTime() - startTimeNano) / (double) timeLimitNano);
 
         double temperature = this.t0;
         int itersInTemperature = 0;
         long itersInUtility = 0L;
 
-        while (System.currentTimeMillis() < finalTimeMillis && nIters < maxIters) {
+        while (System.nanoTime() < finalTimeNano && nIters < maxIters) {
 
             //Move move = selectMove(solution);
             Move move = selectMove(solution);
@@ -103,11 +103,11 @@ public class AdaptiveSA extends Heuristic {
 
                 if (solution.getCost() < bestSolution.getCost()) {
                     bestSolution = solution.clone();
-                    Util.safePrintStatus(output, nIters, bestSolution, solution, System.currentTimeMillis() - startTimeMillis, "*");
+                    Util.safePrintStatus(output, nIters, bestSolution, solution, System.nanoTime() - startTimeNano, "*");
 
                     // Callback for new incumbent solution
                     if (callback != null) {
-                        callback.onNewIncumbent(bestSolution, move.getClass(),System.currentTimeMillis() - startTimeMillis, timeLimitMillis, nIters + 1, maxIters);
+                        callback.onNewIncumbent(bestSolution, move.getClass(),System.nanoTime() - startTimeNano, timeLimitNano, nIters + 1, maxIters);
                     }
                 }
             }
@@ -146,12 +146,12 @@ public class AdaptiveSA extends Heuristic {
             // if necessary, update utility values
             if (++itersInUtility >= updateFrequency) {
                 itersInUtility = 0L;
-                updateProbabilities((System.currentTimeMillis() - startTimeMillis) / (double) timeLimitMillis);
+                updateProbabilities((System.nanoTime() - startTimeNano) / (double) timeLimitNano);
             }
 
             // Callback for iteration
             if (callback != null) {
-                callback.onIteration(bestSolution, System.currentTimeMillis() - startTimeMillis, timeLimitMillis, nIters, maxIters);
+                callback.onIteration(bestSolution, System.nanoTime() - startTimeNano, timeLimitNano, nIters, maxIters);
             }
 
         }
@@ -171,7 +171,7 @@ public class AdaptiveSA extends Heuristic {
 
     /**
      * Update probabilities assinged to moves.
-     * @param normalized_runtime The runtime (in milliseconds) normalized between 0 and 1.
+     * @param normalized_runtime The runtime normalized between 0 and 1.
      */
     private void updateProbabilities(double normalized_runtime) {
 

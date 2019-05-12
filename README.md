@@ -119,7 +119,7 @@ Maximum probability that can be assigned to the selection of a move.
 Disable a move. This parameter may be used more than once to disable multiple moves. Available values are: `shift`, `direct-swap`, `swap`, `switch`, `task-move` and `two-shift`.
 
 `--verbose`  
-If used, the algorithm progress is displayed on the screen.
+If used, the algorithm progress is displayed on the screen. Otherwise, only the final result (makespan, number of iterations an total runtime (in nanoseconds) are displayed on the screen at the end of the optimization process.
 
 #### 2.2.4. Command "analyze"
 

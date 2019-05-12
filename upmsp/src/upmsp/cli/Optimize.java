@@ -160,9 +160,11 @@ public class Optimize implements Callable<Void> {
             }
         }
 
-        // Time limit
+        // Time limit (in nanoseconds)
         if (timeLimit < 0L) {
-            timeLimit = (long) (problem.nJobs * (problem.nMachines / 2.0) * 30);
+            timeLimit = (long) ((problem.nJobs * (problem.nMachines / 2.0) * 30) * 1000000L);
+        } else {
+            timeLimit = timeLimit * 1000000L;
         }
 
         // Log (if verbose)
@@ -171,7 +173,7 @@ public class Optimize implements Callable<Void> {
             System.out.printf("\n");
             System.out.printf("Instance......: %s\n", input.getName());
             System.out.printf("Algorithm.....: %s\n", heuristic);
-            System.out.printf("Other params..: seed=%d, iterations-limit=%s, time-limit=%.2fs\n\n", seed, Util.longToString(iterationsLimit), timeLimit / 1000.0);
+            System.out.printf("Other params..: seed=%d, iterations-limit=%s, time-limit=%.2fs\n\n", seed, Util.longToString(iterationsLimit), timeLimit / 1e9);
 
             System.out.printf("+-------------------------------------------------------------+\n");
             System.out.printf("|                    Optimization progress                    |\n");
@@ -181,12 +183,9 @@ public class Optimize implements Callable<Void> {
         }
 
         // Create initial solution
-        long initialSolutionRuntime = System.currentTimeMillis();
+        long initialSolutionRuntime = System.nanoTime();
         Solution solution = SimpleConstructive.randomSolution(problem, random);
-        initialSolutionRuntime = System.currentTimeMillis() - initialSolutionRuntime;
-
-        // Subtract time spent with creation of an initial solution
-        timeLimit = timeLimit - initialSolutionRuntime;
+        initialSolutionRuntime = System.nanoTime() - initialSolutionRuntime;
 
         // Callback, if enabled
         Callback callback = null;
@@ -197,9 +196,10 @@ public class Optimize implements Callable<Void> {
         // Run heuristic
         long runtime = 0L;
         if (heuristic.getMoves().size() > 0) {
-            runtime = System.currentTimeMillis();
-            solution = heuristic.run(solution, timeLimit, iterationsLimit, callback, (verbose ? System.out : null));
-            runtime = System.currentTimeMillis() - runtime;
+            runtime = System.nanoTime();
+            solution = heuristic.run(solution, timeLimit - initialSolutionRuntime, iterationsLimit,
+                    callback, (verbose ? System.out : null));
+            runtime = System.nanoTime() - runtime;
         }
 
         // Export callback data, if set
@@ -240,7 +240,7 @@ public class Optimize implements Callable<Void> {
             // General info
             System.out.printf("Best makespan......: %d\n", solution.getCost());
             System.out.printf("N. of iterations...: %d\n", heuristic.getNIters());
-            System.out.printf("Total runtime (s)..: %.4fs\n\n", (initialSolutionRuntime + runtime) / 1000.0);
+            System.out.printf("Total runtime (s)..: %.4fs\n\n", (initialSolutionRuntime + runtime) / 1e9);
         }
 
         // Output for non verbose mode
@@ -270,13 +270,13 @@ public class Optimize implements Callable<Void> {
          */
         private static class Entry {
 
-            public long makespan, timeMillis, iteration;
+            public long makespan, timeNano, iteration;
             public double timePerc;
 
-            public Entry(long makespan, double timePerc, long timeMillis, long iteration) {
+            public Entry(long makespan, double timePerc, long timeNano, long iteration) {
                 this.makespan = makespan;
                 this.timePerc = timePerc;
-                this.timeMillis = timeMillis;
+                this.timeNano = timeNano;
                 this.iteration = iteration;
             }
         }
@@ -300,12 +300,12 @@ public class Optimize implements Callable<Void> {
         }
 
         @Override
-        public void onNewIncumbent(Solution incumbent, Class<? extends Move> move, long runtimeMillis, long timeLimitMillis, long iteration, long iterationLimit) {
-            this.entries.add(new Entry(incumbent.getCost(), runtimeMillis / (double) timeLimitMillis, runtimeMillis, iteration));
+        public void onNewIncumbent(Solution incumbent, Class<? extends Move> move, long runtimeNano, long timeLimitNano, long iteration, long iterationLimit) {
+            this.entries.add(new Entry(incumbent.getCost(), runtimeNano / (double) timeLimitNano, runtimeNano, iteration));
         }
 
         @Override
-        public void onIteration(Solution incumbent, long runtimeMillis, long timeLimitMillis, long iteration, long iterationLimit) {
+        public void onIteration(Solution incumbent, long runtimeNano, long timeLimitNano, long iteration, long iterationLimit) {
             // Do nothing.
         }
 
@@ -322,7 +322,7 @@ public class Optimize implements Callable<Void> {
 
             // Write data to file
             try (BufferedWriter buffer = Files.newBufferedWriter(output); PrintWriter writer = new PrintWriter(buffer)) {
-                writer.printf("INSTANCE,N,M,SEED,ITERATION,TIME.MILLIS,TIME.PERC,MAKESPAN\n");
+                writer.printf("INSTANCE,N,M,SEED,ITERATION,TIME.NANO,TIME.PERC,MAKESPAN\n");
                 for (Entry entry : entries) {
                     writer.printf("%s,%d,%d,%d,%d,%d,%.6f,%d\n",
                             instance,
@@ -330,7 +330,7 @@ public class Optimize implements Callable<Void> {
                             m,
                             seed,
                             entry.iteration,
-                            entry.timeMillis,
+                            entry.timeNano,
                             entry.timePerc,
                             entry.makespan);
                 }

@@ -67,16 +67,17 @@ public class Util {
      * @param nIters       the current iteration number.
      * @param bestSolution the best solution object.
      * @param solution     the current solution object.
+     * @param timeNano     elapsed time (in nanoseconds)
      * @param special      some informative String to print after the row.
      */
-    public static void safePrintStatus(PrintStream output, long nIters, Solution bestSolution, Solution solution, long timeMillis, String special) {
+    public static void safePrintStatus(PrintStream output, long nIters, Solution bestSolution, Solution solution, long timeNano, String special) {
         if (output != null) {
             output.printf("| %s %10s | %13d | %13d | %12.2f |\n",
                     special,
                     longToString(nIters),
                     bestSolution.getCost(),
                     solution.getCost(),
-                    timeMillis / 1000.0);
+                    timeNano / 1e9);
         }
     }
 

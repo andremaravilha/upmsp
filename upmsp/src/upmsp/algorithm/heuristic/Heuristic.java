@@ -86,13 +86,13 @@ public abstract class Heuristic {
      * Runs the local search, returning the best solution obtained..
      *
      * @param solution        the initial (input) solution.
-     * @param timeLimitMillis the time limit in milliseconds.
+     * @param timeLimitNano   the time limit in nanoseconds.
      * @param maxIters        the maximum number of iterations to execute.
      * @param callback        callback object.
      * @param output          the output.
      * @return the solution
      */
-    public abstract Solution run(Solution solution, long timeLimitMillis, long maxIters, Callback callback, PrintStream output);
+    public abstract Solution run(Solution solution, long timeLimitNano, long maxIters, Callback callback, PrintStream output);
 
 
     /**
@@ -159,22 +159,22 @@ public abstract class Heuristic {
          * Called when a new incumbent solution is found.
          * @param incumbent Incumbent solution.
          * @param move Class of the move that returned the incumbent solution.
-         * @param runtimeMillis Runtime (in milliseconds).
-         * @param timeLimitMillis Time limit (in milliseconds).
+         * @param runtimeNano Runtime (in nanoseconds).
+         * @param timeLimitNano Time limit (in nanoseconds).
          * @param iteration Iteration.
          * @param iterationLimit Maximum number of iterations.
          */
-        void onNewIncumbent(Solution incumbent, Class<? extends Move> move, long runtimeMillis, long timeLimitMillis, long iteration, long iterationLimit);
+        void onNewIncumbent(Solution incumbent, Class<? extends Move> move, long runtimeNano, long timeLimitNano, long iteration, long iterationLimit);
 
         /**
          * Called at the end of an iteration.
          * @param incumbent Incumbent solution.
-         * @param runtimeMillis Runtime (in milliseconds).
-         * @param timeLimitMillis Time limit (in milliseconds).
+         * @param runtimeNano Runtime (in nanoseconds).
+         * @param timeLimitNano Time limit (in nanoseconds).
          * @param iteration Iteration.
          * @param iterationLimit Maximum number of iterations.
          */
-        void onIteration(Solution incumbent, long runtimeMillis, long timeLimitMillis, long iteration, long iterationLimit);
+        void onIteration(Solution incumbent, long runtimeNano, long timeLimitNano, long iteration, long iterationLimit);
 
     }
 }

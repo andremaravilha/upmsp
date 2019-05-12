@@ -75,6 +75,7 @@ public interface MoveAnalysis {
 
             long makespan = solution.getCost();
             long sumMachineTimes = Arrays.asList(solution.machines).stream().mapToLong(x -> x.getMakespan()).sum();
+            ++cardinality;
 
             String flag1 = (makespan < refMakespan ? "BETTER" : (makespan > refMakespan ? "WORSE" : "EQUAL"));
             String flag2 = (sumMachineTimes < refSumMachineTimes ? "BETTER" : (sumMachineTimes > refSumMachineTimes ? "WORSE" : "EQUAL"));

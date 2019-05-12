@@ -81,13 +81,12 @@ public class Analyze implements Callable<Void> {
         try (BufferedWriter bw = Files.newBufferedWriter(output.toPath())) {
 
             writer = new PrintWriter(bw);
-            writer.printf("INSTANCE,N,M,SEED,TIME.LIMIT.MS,TIME.MS,ITERATION,INCUMBENT.MOVE,INCUMBENT.MS,INCUMBENT.SMT," +
-                    "MOVE,CARDINALITY,CATEGORY,COUNT,MS.BEST,MS.WORST,MS.MEAN,SMT.BEST,SMT.WORST,SMT.MEAN\n");
+            writer.printf("INSTANCE,N,M,SEED,TIME.LIMIT.NANO,TIME.NANO,ITERATION,INCUMBENT.MOVE,INCUMBENT.MS,INCUMBENT.SMT," +
+                    "MOVE,CARDINALITY,CATEGORY.MS,CATEGORY.SMT,COUNT,MS.BEST,MS.WORST,MS.MEAN,SMT.BEST,SMT.WORST,SMT.MEAN\n");
 
             // Run entries
             Files.createDirectories(output.toPath().toAbsolutePath().getParent());
             try (BufferedWriter writer = Files.newBufferedWriter(output.toPath().toAbsolutePath())) {
-                // TODO
 
                 ExecutorService executor = Executors.newFixedThreadPool(threads);
                 for (int repetition = 1; repetition <= repetitions; ++repetition) {
@@ -111,15 +110,15 @@ public class Analyze implements Callable<Void> {
         return null;
     }
 
-    private synchronized void writeEntryResult(File instance, Problem problem, Incumbent incumbent, long seed, long timeLimitMillis, MoveAnalysis.Result result) {
+    private synchronized void writeEntryResult(File instance, Problem problem, Incumbent incumbent, long seed, long timeLimitNano, MoveAnalysis.Result result) {
         for (MoveAnalysis.Category category : MoveAnalysis.Category.values()) {
             MoveAnalysis.Stats stats = result.stats.get(category);
-            writer.printf("%s,%d,%d,%d,%d,%d,%d,%s,%d,%d,%s,%d,%s,%d,%d,%d,%.6f,%d,%d,%.6f\n",
+            writer.printf("%s,%d,%d,%d,%d,%d,%d,%s,%d,%d,%s,%d,%s,%s,%d,%d,%d,%.6f,%d,%d,%.6f\n",
                     instance.getName().replaceAll(".txt", ""),
                     problem.nJobs,
                     problem.nMachines,
                     seed,
-                    timeLimitMillis,
+                    timeLimitNano,
                     incumbent.time,
                     incumbent.iteration,
                     incumbent.move,
@@ -127,7 +126,8 @@ public class Analyze implements Callable<Void> {
                     result.refSumMachineTimes,
                     result.move,
                     result.cardinality,
-                    category.name().toLowerCase(),
+                    category.name().toLowerCase().split("_")[0],
+                    category.name().toLowerCase().split("_")[1],
                     stats.count,
                     (stats.count > 0 ? stats.makespan.best : 0),
                     (stats.count > 0 ? stats.makespan.worst : 0),
@@ -189,7 +189,7 @@ public class Analyze implements Callable<Void> {
         }
 
         @Override
-        public void onNewIncumbent(Solution incumbent, Class<? extends Move> move, long runtimeMillis, long timeLimitMillis, long iteration, long iterationLimit) {
+        public void onNewIncumbent(Solution incumbent, Class<? extends Move> move, long runtimeNano, long timeLimitNano, long iteration, long iterationLimit) {
             if (move != null) {
                 String moveName = move.getSimpleName()
                         .toLowerCase()
@@ -198,12 +198,12 @@ public class Analyze implements Callable<Void> {
                         .replace("task", "task-")
                         .replace("two", "two-");
 
-                track.add(new Incumbent(incumbent, moveName, iteration, runtimeMillis + initialSolutionRuntime));
+                track.add(new Incumbent(incumbent, moveName, iteration, runtimeNano + initialSolutionRuntime));
             }
         }
 
         @Override
-        public void onIteration(Solution incumbent, long runtimeMillis, long timeLimitMillis, long iteration, long iterationLimit) {
+        public void onIteration(Solution incumbent, long runtimeNano, long timeLimitNano, long iteration, long iterationLimit) {
             // Do nothing
         }
 
@@ -247,27 +247,24 @@ public class Analyze implements Callable<Void> {
                 heuristic.addMove(new TwoShiftSmart(problem, random, 1, false));
 
                 // Calculate time limit
-                long timeLimit = (long) (problem.nJobs * (problem.nMachines / 2.0) * 30);
+                long timeLimit = (long) ((problem.nJobs * (problem.nMachines / 2.0) * 30) * 1000000L);
 
                 // Create initial solution
-                initialSolutionRuntime = System.currentTimeMillis();
+                initialSolutionRuntime = System.nanoTime();
                 Solution solution = SimpleConstructive.randomSolution(problem, random);
-                initialSolutionRuntime = System.currentTimeMillis() - initialSolutionRuntime;
+                initialSolutionRuntime = System.nanoTime() - initialSolutionRuntime;
 
                 track.add(new Incumbent(solution, "", 0L, 0L));
 
-                // Subtract time spent with creation of an initial solution
-                timeLimit = timeLimit - initialSolutionRuntime;
-
                 // Run heuristic
-                heuristic.run(solution, timeLimit, Long.MAX_VALUE, this, null);
+                heuristic.run(solution, timeLimit - initialSolutionRuntime, Long.MAX_VALUE, this, null);
 
                 // Write data
                 for (MoveAnalysis move : Analyze.this.moves) {
 
                     for (Incumbent incumbent : track) {
                         MoveAnalysis.Result result = move.analyze(problem, incumbent.solution);
-                        writeEntryResult(instance, problem, incumbent, seed, timeLimit + initialSolutionRuntime, result);
+                        writeEntryResult(instance, problem, incumbent, seed, timeLimit, result);
                     }
 
                     // Update progress
