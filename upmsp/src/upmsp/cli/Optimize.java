@@ -54,8 +54,8 @@ public class Optimize implements Callable<Void> {
     @Option(names = {"--update-frequency"}, description = "Iterations before update utility values.", defaultValue = "1")
     private long updateFrequency;
 
-    @Option(names = {"--max-probability"}, description = "Maximum probability of choosing a move.", defaultValue = "1")
-    private long maxProbability;
+    @Option(names = {"--max-probability"}, description = "Maximum probability of choosing a move.", defaultValue = "1.0")
+    private double maxProbability;
 
     @Option(names = {"--time-limit"}, description = "Maximum runtime (in milliseconds). If negative, it is set according to the problem size.", defaultValue = "-1")
     private long timeLimit;

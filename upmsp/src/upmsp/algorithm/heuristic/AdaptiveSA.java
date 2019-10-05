@@ -178,7 +178,7 @@ public class AdaptiveSA extends Heuristic {
         // Calculate moves' utility
         double sum = 0.0;
         for (int i = 0; i < moves.size(); ++i) {
-            probabilities[i] = utility.evaluate(problem, moves.get(i).getClass(), normalized_runtime);
+            probabilities[i] = utility.evaluate(problem, moves.get(i).getClass(), bestSolution, normalized_runtime);
             sum += probabilities[i];
         }
 

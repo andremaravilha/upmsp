@@ -20,6 +20,7 @@ public class Solution {
 
     protected int nMachines;
     protected int makespan;
+    protected int sumMachineTimes;
     public Machine makespanMachine;
 
     /**
@@ -37,6 +38,7 @@ public class Solution {
 
         nMachines = 0;
         makespan = 0;
+        sumMachineTimes = 0;
         makespanMachine = machines[0];
     }
 
@@ -77,6 +79,14 @@ public class Solution {
     }
 
     /**
+     * Return the sum of machine completion times.
+     * @return the sum of machine copletion times.
+     */
+    public int getSumMachineTimes() {
+        return sumMachineTimes;
+    }
+
+    /**
      * Gets the number of machines used in this solution.
      *
      * @return number of machines used in this solution.
@@ -92,7 +102,9 @@ public class Solution {
      */
     public int updateCost() {
         makespan = 0;
+        sumMachineTimes = 0;
         for (Machine machine : machines) {
+            sumMachineTimes += machine.getMakespan();
             if (machine.getMakespan() > makespan) {
                 makespan = machine.getMakespan();
                 makespanMachine = machine;

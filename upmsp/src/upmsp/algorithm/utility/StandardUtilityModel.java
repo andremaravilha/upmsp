@@ -3,6 +3,7 @@ package upmsp.algorithm.utility;
 import org.apache.commons.math3.util.FastMath;
 import upmsp.algorithm.neighborhood.*;
 import upmsp.model.Problem;
+import upmsp.model.solution.Solution;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -15,21 +16,31 @@ import java.util.Properties;
  */
 public class StandardUtilityModel implements UtilityModel {
 
-    final double INTERCEPT;
-    final double SHIFT;
-    final double DIRECT_SWAP;
-    final double SWAP;
-    final double SWITCH;
-    final double TASK_MOVE;
-    final double TWO_SHIFT;
-    final double N;
-    final double M;
-    final double T;
-    final double N_M;
-    final double N_T;
-    final double M_T;
-    final double T2;
+    private static class Coefficients {
+        public double INTERCEPT = 0.0;
+        public double J = 0.0;
+        public double M = 0.0;
+        public double S = 0.0;
+        public double SX = 0.0;
+        public double T = 0.0;
+        public double J2 = 0.0;
+        public double M2 = 0.0;
+        public double S2 = 0.0;
+        public double SX2 = 0.0;
+        public double T2 = 0.0;
+        public double J_M = 0.0;
+        public double J_S = 0.0;
+        public double J_T = 0.0;
+        public double M_S = 0.0;
+        public double M_SX = 0.0;
+    }
 
+    private Coefficients cShift = new Coefficients();
+    private Coefficients cDirectSwap = new Coefficients();
+    private Coefficients cSwap = new Coefficients();
+    private Coefficients cSwitch = new Coefficients();
+    private Coefficients cTaskMove = new Coefficients();
+    private Coefficients cTwoShift = new Coefficients();
 
     public StandardUtilityModel(Path path) throws IOException {
 
@@ -40,44 +51,68 @@ public class StandardUtilityModel implements UtilityModel {
             Properties properties = new Properties();
             properties.load(input);
 
-            // Get coefficients
-            INTERCEPT = Double.parseDouble(properties.getProperty("intercept"));
-            SHIFT = Double.parseDouble(properties.getProperty("shift"));
-            DIRECT_SWAP = Double.parseDouble(properties.getProperty("direct_swap"));
-            SWAP = Double.parseDouble(properties.getProperty("swap"));
-            SWITCH = Double.parseDouble(properties.getProperty("switch"));
-            TASK_MOVE = Double.parseDouble(properties.getProperty("task_move"));
-            TWO_SHIFT = Double.parseDouble(properties.getProperty("two_shift"));
-            N = Double.parseDouble(properties.getProperty("n"));
-            M = Double.parseDouble(properties.getProperty("m"));
-            T = Double.parseDouble(properties.getProperty("t"));
-            N_M = Double.parseDouble(properties.getProperty("n_m"));
-            N_T = Double.parseDouble(properties.getProperty("n_t"));
-            M_T = Double.parseDouble(properties.getProperty("m_t"));
-            T2 = Double.parseDouble(properties.getProperty("t2"));
+            String[] moves = { "SHIFT", "DIRECT_SWAP", "SWAP", "SWITCH", "TASK_MOVE", "TWO_SHIFT" };
+            Coefficients[] coefficients = { cShift, cDirectSwap, cSwap, cSwitch, cTaskMove, cTwoShift };
+
+            // Read coefficients for each move
+            for (int i = 0; i < moves.length; ++i) {
+
+                String move = moves[i];
+                Coefficients c = coefficients[i];
+
+                c.INTERCEPT = Double.parseDouble(properties.getProperty(move + ".INTERCEPT"));
+                c.J = Double.parseDouble(properties.getProperty(move + ".J"));
+                c.M = Double.parseDouble(properties.getProperty(move + ".M"));
+                c.S = Double.parseDouble(properties.getProperty(move + ".S"));
+                c.SX = Double.parseDouble(properties.getProperty(move + ".SX"));
+                c.T = Double.parseDouble(properties.getProperty(move + ".T"));
+                c.J2 = Double.parseDouble(properties.getProperty(move + ".J2"));
+                c.M2 = Double.parseDouble(properties.getProperty(move + ".M2"));
+                c.S2 = Double.parseDouble(properties.getProperty(move + ".S2"));
+                c.SX2 = Double.parseDouble(properties.getProperty(move + ".SX2"));
+                c.T2 = Double.parseDouble(properties.getProperty(move + ".T2"));
+                c.J_M = Double.parseDouble(properties.getProperty(move + ".J_M"));
+                c.J_S = Double.parseDouble(properties.getProperty(move + ".J_S"));
+                c.J_T = Double.parseDouble(properties.getProperty(move + ".J_T"));
+                c.M_S = Double.parseDouble(properties.getProperty(move + ".M_S"));
+                c.M_SX = Double.parseDouble(properties.getProperty(move + ".M_SX"));
+            }
         }
     }
 
     @Override
-    public double evaluate(Problem problem, Class<? extends Move> neighborhood, double t) {
+    public double evaluate(Problem problem, Class<? extends Move> neighborhood, Solution incumbent, double time) {
 
         // Transform time
-        double xt = 1.0 / t;
+        double t = FastMath.log10(time);
 
-        // Get neighborhood coefficient
-        double neighborhood_coeff = 0.0;
-        if (Shift.class.equals(neighborhood) || ShiftSmart.class.equals(neighborhood)) neighborhood_coeff = SHIFT;
-        else if (SimpleSwap.class.equals(neighborhood) || SimpleSwapSmart.class.equals(neighborhood)) neighborhood_coeff = DIRECT_SWAP;
-        else if (Swap.class.equals(neighborhood) || SwapSmart.class.equals(neighborhood)) neighborhood_coeff = SWAP;
-        else if (Switch.class.equals(neighborhood) || SwitchSmart.class.equals(neighborhood)) neighborhood_coeff = SWITCH;
-        else if (TaskMove.class.equals(neighborhood) || TaskMoveSmart.class.equals(neighborhood)) neighborhood_coeff = TASK_MOVE;
-        else if (TwoShift.class.equals(neighborhood) || TwoShiftSmart.class.equals(neighborhood)) neighborhood_coeff = TWO_SHIFT;
+        // Get move coefficients
+        Coefficients c = null;
+        if (Shift.class.equals(neighborhood) || ShiftSmart.class.equals(neighborhood)) {
+            c = cShift;
+        } else if (SimpleSwap.class.equals(neighborhood) || SimpleSwapSmart.class.equals(neighborhood)) {
+            c = cDirectSwap;
+        } else if (Swap.class.equals(neighborhood) || SwapSmart.class.equals(neighborhood)) {
+            c = cSwap;
+        } else if (Switch.class.equals(neighborhood) || SwitchSmart.class.equals(neighborhood)) {
+            c = cSwitch;
+        } else if (TaskMove.class.equals(neighborhood) || TaskMoveSmart.class.equals(neighborhood)) {
+            c = cTaskMove;
+        } else if (TwoShift.class.equals(neighborhood) || TwoShiftSmart.class.equals(neighborhood)) {
+            c = cTwoShift;
+        }
 
-        return FastMath.pow(
-                INTERCEPT + neighborhood_coeff + N * problem.nJobs + M * problem.nMachines + T * xt +
-                N_M * problem.nJobs * problem.nMachines + N_T * problem.nJobs * xt + M_T * problem.nMachines * xt +
-                T2 * xt * xt,
-                4);
+        double log10E = c.INTERCEPT +
+                c.J * problem.nJobs + c.M * problem.nMachines + c.S * problem.maximumSetupTime +
+                c.SX * incumbent.getSumMachineTimes() + c.T * t + c.J2 * (problem.nJobs * problem.nJobs) +
+                c.M2 * (problem.nMachines * problem.nMachines) + c.S2 * (problem.maximumSetupTime * problem.maximumSetupTime) +
+                c.SX2 * (incumbent.getSumMachineTimes() * incumbent.getSumMachineTimes()) + c.T2 * (t * t) +
+                c.J_M * (problem.nJobs * problem.nMachines) + c.J_S * (problem.nJobs * problem.maximumSetupTime) +
+                c.J_T * (problem.nJobs * t) + c.M_S * (problem.nMachines * problem.maximumSetupTime) +
+                c.M_SX * (problem.nMachines * incumbent.getSumMachineTimes());
+
+        double utility = FastMath.pow(10, log10E);
+        return utility;
     }
     
 }

@@ -2,6 +2,7 @@ package upmsp.algorithm.utility;
 
 import upmsp.algorithm.neighborhood.Move;
 import upmsp.model.Problem;
+import upmsp.model.solution.Solution;
 
 /**
  * Interface implemented by all prediction model for neighborhoods' utility.
@@ -11,12 +12,13 @@ import upmsp.model.Problem;
 public interface UtilityModel {
 
     /**
-     * Return the predicted utility of a certain neighborhood (or move) in a certain problem at a given moment t.
+     * Return the predicted utility of a move at a given moment of the optimization process.
      * @param problem Instance of the problem.
      * @param neighborhood Class of the neighborhood.
-     * @param t Moment (Runtime normalized between 0 and 1).
+     * @param incumbent Incumbent solution.
+     * @param time Runtime normalized between 0 and 1.
      * @return The predicted utility.
      */
-    double evaluate(Problem problem, Class<? extends Move> neighborhood, double t);
+    double evaluate(Problem problem, Class<? extends Move> neighborhood, Solution incumbent, double time);
 
 }
