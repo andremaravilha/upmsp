@@ -17,74 +17,113 @@ public class TwoShift extends Move {
 
     private Machine machine;
     private int pos1_1, pos1_2, pos2_1, pos2_2, job1, job2;
-    private boolean useMakespanMachine;
 
     /**
      * Instantiates a new Shift Move.
-     *
-     * @param problem            problem.
-     * @param random             random number generator.
-     * @param priority           the priority of this neighborhood.
-     * @param useMakespanMachine true if the makespan machine should be always considered or false otherwise.
+     * @param problem problem.
+     * @param random  random number generator.
      */
-    public TwoShift(Problem problem, Random random, int priority, boolean useMakespanMachine) {
-        super(problem, random, "2-Shift" + (useMakespanMachine ? "(mk)" : ""), priority);
-        this.useMakespanMachine = useMakespanMachine;
+    public TwoShift(Problem problem, Random random) {
+        super(problem, random, "two-shift");
     }
 
-    public void accept() {
-        super.accept();
-    }
-
-    public int doMove(Solution solution) {
-        super.doMove(solution);
+    @Override
+    public int doMove(Solution solution, boolean useIntensificationPolicy, boolean useMakespanMachine) {
+        super.doMove(solution, useIntensificationPolicy, useMakespanMachine);
 
         // selecting machines to involve in operation
         if (useMakespanMachine && solution.makespanMachine.getNJobs() > 1) {
             machine = solution.makespanMachine;
-        }
-        else {
+        } else {
             int m;
             do {
                 m = random.nextInt(solution.machines.length);
-            }
-            while (solution.machines[m].getNJobs() <= 1);
+            } while (solution.machines[m].getNJobs() <= 1);
             machine = solution.machines[m];
         }
 
-        // removing first job
-        pos1_1 = random.nextInt(machine.getNJobs());
-        job1 = machine.jobs[pos1_1];
-        machine.delJob(pos1_1);
+        // selecting jobs to perform operation
+        if (useIntensificationPolicy) {
 
-        // removing second job
-        pos2_1 = random.nextInt(machine.getNJobs());
-        job2 = machine.jobs[pos2_1];
-        machine.delJob(pos2_1);
+            // selecting job1 to perform operation
+            pos1_1 = random.nextInt(machine.getNJobs());
+            job1 = machine.jobs[pos1_1];
+            machine.delJob(pos1_1);
 
-        // adding first job
-        pos1_2 = random.nextInt(machine.getNJobs() + 1);
-        machine.addJob(job1, pos1_2);
+            // selecting destination position for job1
+            int cost = Integer.MAX_VALUE;
+            for (int p = 0; p <= machine.getNJobs(); p++) {
+                if (p == pos1_1) continue;
+                int simulatedCost = machine.getDeltaCostAddJob(job1, p);
+                if (simulatedCost < cost) {
+                    cost = simulatedCost;
+                    pos1_2 = p;
+                }
+            }
+            machine.addJob(job1, pos1_2);
 
-        // adding second job
-        pos2_2 = random.nextInt(machine.getNJobs() + 1);
-        machine.addJob(job2, pos2_2);
+            // selecting job2 to perform operation
+            do {
+                pos2_1 = random.nextInt(machine.getNJobs());
+            } while (pos2_1 == pos1_2);
+            job2 = machine.jobs[pos2_1];
+            machine.delJob(pos2_1);
+
+            // selecting destination position
+            cost = Integer.MAX_VALUE;
+            for (int p = 0; p <= machine.getNJobs(); p++) {
+                if (p == pos2_1) continue;
+                int simulatedCost = machine.getDeltaCostAddJob(job2, p);
+                if (simulatedCost < cost) {
+                    cost = simulatedCost;
+                    pos2_2 = p;
+                }
+            }
+            machine.addJob(job2, pos2_2);
+
+        } else {
+
+            // removing first job
+            pos1_1 = random.nextInt(machine.getNJobs());
+            job1 = machine.jobs[pos1_1];
+            machine.delJob(pos1_1);
+
+            // adding first job
+            pos1_2 = random.nextInt(machine.getNJobs() + 1);
+            machine.addJob(job1, pos1_2);
+
+            // removing second job
+            pos2_1 = random.nextInt(machine.getNJobs());
+            job2 = machine.jobs[pos2_1];
+            machine.delJob(pos2_1);
+
+            // adding second job
+            pos2_2 = random.nextInt(machine.getNJobs() + 1);
+            machine.addJob(job2, pos2_2);
+        }
 
         solution.updateCost();
         return deltaCost = solution.getCost() - initialCost;
     }
 
-    public boolean hasMove(Solution solution) {
+    @Override
+    public boolean hasMove(Solution solution, boolean useIntensificationPolicy, boolean useMakespanMachine) {
         return !useMakespanMachine || solution.makespanMachine.getNJobs() > 1;
     }
 
+    @Override
+    public void accept() {
+        super.accept();
+    }
+
+    @Override
     public void reject() {
         super.reject();
 
         machine.delJob(pos2_2);
-        machine.delJob(pos1_2);
-
         machine.addJob(job2, pos2_1);
+
+        machine.delJob(pos1_2);
         machine.addJob(job1, pos1_1);
 
         currentSolution.updateCost();

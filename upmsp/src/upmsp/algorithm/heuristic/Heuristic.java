@@ -23,13 +23,11 @@ public abstract class Heuristic {
     protected final List<Move> moves = new ArrayList<>();
 
     protected Solution bestSolution;
-    protected int sumWeights = 0;
     protected long nIters = 0;
 
 
     /**
      * Instantiates a new Heuristic.
-     *
      * @param problem the problem reference.
      * @param random  the random number generator.
      * @param name    the name
@@ -42,49 +40,56 @@ public abstract class Heuristic {
 
     /**
      * Adds a move to the heuristic.
-     *
      * @param move the move to be added.
      */
     public void addMove(Move move) {
         moves.add(move);
-        moves.sort((a, b) -> -Integer.compare(a.getPriority(), b.getPriority()));
-        sumWeights += move.getPriority();
     }
 
     /**
-     * Accepts move and updates learning algorithm (if present).
-     *
-     * @param move the move to be accepted.
+     * Returns an unmodifiableList with the moves in the heuristic.
+     * @return an unmodifiableList with the moves in the heuristic.
      */
-    public void acceptMove(Move move) {
-        move.accept();
-
-        //if (USE_LEARNING && move.getDeltaCost() < 0) learningAutomata.updateProbabilities(1.0);
-    }
-
-    /**
-     * Rejects move and updates learning algorithm (if present).
-     *
-     * @param move the move to be rejected.
-     */
-    public void rejectMove(Move move) {
-        move.reject();
-
-        //if (USE_LEARNING) learningAutomata.updateProbabilities(0.0);
+    public List<Move> getMoves() {
+        return Collections.unmodifiableList(moves);
     }
 
     /**
      * Resets all moves considered by the heuristic.
      */
     public void resetMoves() {
-        for (Move move : moves)
+        for (Move move : moves) {
             move.reset();
+        }
     }
 
+    /**
+     * Randomly selects a move.
+     * @return a move.
+     */
+    protected Move selectMove() {
+        return moves.get(random.nextInt(moves.size()));
+    }
 
     /**
-     * Runs the local search, returning the best solution obtained..
+     * Accepts move.
+     * @param move the move to be accepted.
+     */
+    protected void acceptMove(Move move) {
+        move.accept();
+    }
+
+    /**
+     * Rejects move.
      *
+     * @param move the move to be rejected.
+     */
+    protected void rejectMove(Move move) {
+        move.reject();
+    }
+
+    /**
+     * Runs the heuristic, returning the best solution obtained.
      * @param solution        the initial (input) solution.
      * @param timeLimitNano   the time limit in nanoseconds.
      * @param maxIters        the maximum number of iterations to execute.
@@ -94,26 +99,8 @@ public abstract class Heuristic {
      */
     public abstract Solution run(Solution solution, long timeLimitNano, long maxIters, Callback callback, PrintStream output);
 
-
-    /**
-     * Selects move.
-     *
-     * @param solution the solution
-     * @return a randomly selected move (neighborhood), considering the provided weights.
-     */
-    protected Move selectMove(Solution solution) {
-        Move move = moves.get(random.nextInt(moves.size()));
-        while (!move.hasMove(solution))
-            move = moves.get(random.nextInt(moves.size()));
-        return move;
-    }
-
-
-    // region getters and setters
-
     /**
      * Gets best solution.
-     *
      * @return the best solution obtained so far.
      */
     public Solution getBestSolution() {
@@ -121,17 +108,7 @@ public abstract class Heuristic {
     }
 
     /**
-     * Returns an unmodifiableList with the moves in the heuristic.
-     *
-     * @return an unmodifiableList with the moves in the heuristic.
-     */
-    public List<Move> getMoves() {
-        return Collections.unmodifiableList(moves);
-    }
-
-    /**
      * Gets the number of iterations executed.
-     *
      * @return the n iters
      */
     public long getNIters() {
@@ -140,14 +117,12 @@ public abstract class Heuristic {
 
     /**
      * Returns the string representation of the heuristic.
-     *
      * @return the string representation of the heuristic.
      */
+    @Override
     public String toString() {
         return name;
     }
-
-    // endregion getters and setters
 
 
     /**

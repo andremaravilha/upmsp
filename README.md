@@ -2,11 +2,11 @@ This is a fork of [tuliotoffolo/upmsp](https://github.com/tuliotoffolo/upmsp) in
 
 # Unrelated Parallel Machine Scheduling Problem with Sequence Dependent Setup Times
 
-> **Contributors:** André L. Maravilha<sup>3,4</sup>, Letícia Mayra Pereira<sup>1,4</sup>, Felipe Campelo<sup>2,4</sup>  
-> <sup>1</sup> *Programa de Pós-Graduação em Engenharia Elétrica, Universidade Federal de Minas Gerais ([PPGEE](https://www.ppgee.ufmg.br/), [UFMG](https://www.ufmg.br/))*  
-> <sup>2</sup> *Depto. Engenharia Elétrica, Universidade Federal de Minas Gerais ([DEE](http://www.dee.ufmg.br/), [UFMG](https://www.ufmg.br/))*  
-> <sup>3</sup> *Depto. Informática, Gestão e Design, Centro Fed. de Edu. Tecnológica de Minas Gerais ([DIGD-DV](http://www.digddv.cefetmg.br/), [CEFET-MG](https://www.cefetmg.br/))*  
-> <sup>4</sup> *Operations Research and Complex Systems Lab., Universidade Federal de Minas Gerais ([ORCS Lab](http://orcslab.ppgee.ufmg.br/), [UFMG](https://www.ufmg.br/))*
+> **Contributors:** André L. Maravilha<sup>1,4</sup>, Letícia Mayra Pereira<sup>2,4</sup>, Elizabeth Wanner<sup>3</sup>, Felipe Campelo<sup>2,3,4</sup>  
+> <sup>1</sup> *Dept. of Informatics, Management and Design - Centro Fed. de Edu. Tecnológica de Minas Gerais ([url](https://www.cefetmg.br/))*   
+> <sup>2</sup> *Graduate Program in Electrical Engineering - Universidade Federal de Minas Gerais ([url](https://www.ppgee.ufmg.br/))*  
+> <sup>3</sup> *Computer Science Group - Aston University ([url](https://www2.aston.ac.uk))*    
+> <sup>4</sup> *Operations Research and Complex Systems Lab. - Universidade Federal de Minas Gerais ([url](http://orcslab.ppgee.ufmg.br/))*
 
 ## 1. Overview
 
@@ -109,7 +109,7 @@ Path to file containing the coefficients of the prediction model for the expecte
 
 `--update-frequency <VALUE>`  
 (Default: `1`)  
-Maximum probability of choosing a move.
+Number of iterations to run before update the selection probabilities of moves.
 
 `--max-probability <VALUE>`  
 (Default: `1.0`)  
@@ -124,6 +124,9 @@ Track the values of makespan of incumbent solutions found throughout the optimiz
 
 `--verbose`  
 If used, the algorithm progress is displayed on the screen. Otherwise, only the final result (makespan, number of iterations an total runtime (in nanoseconds) are displayed on the screen at the end of the optimization process.
+
+`--stats`  
+If used, it displays a statistic table with information about the neighborhood moves used by the heuristic. If used without `--verbose` option, a line for each neighborhood is displayed after the final result (makespan, number of iterations and total runtime in nanoseconds). Each line is composed by the name of the move, number of calls to the move, number of improvements, number of sideways, number of worsens, number of accepted moves, and number of rejected moves.
 
 #### 2.2.4. Command "analyze"
 

@@ -33,6 +33,9 @@ public class Optimize implements Callable<Void> {
     @Option(names = {"--verbose"}, description = "Show optimization progress.")
     private boolean verbose = false;
 
+    @Option(names = {"--stats"}, description = "Show some statistics about the optimization process.")
+    private boolean showStats = false;
+
     @Option(names = {"--algorithm"}, description = "sa, adaptive-sa", defaultValue = "sa")
     private String algorithm;
 
@@ -117,45 +120,27 @@ public class Optimize implements Callable<Void> {
             switch (move) {
 
                 case "shift":
-                    heuristic.addMove(new Shift(problem, random, 1, true));
-                    heuristic.addMove(new Shift(problem, random, 1, false));
-                    heuristic.addMove(new ShiftSmart(problem, random, 1, true));
-                    heuristic.addMove(new ShiftSmart(problem, random, 1, false));
+                    heuristic.addMove(new Shift(problem, random));
                     break;
 
                 case "direct-swap":
-                    heuristic.addMove(new SimpleSwap(problem, random, 1, true));
-                    heuristic.addMove(new SimpleSwap(problem, random, 1, false));
-                    heuristic.addMove(new SimpleSwapSmart(problem, random, 1, true));
-                    heuristic.addMove(new SimpleSwapSmart(problem, random, 1, false));
+                    heuristic.addMove(new SimpleSwap(problem, random));
                     break;
 
                 case "swap":
-                    heuristic.addMove(new Swap(problem, random, 1, true));
-                    heuristic.addMove(new Swap(problem, random, 1, false));
-                    heuristic.addMove(new SwapSmart(problem, random, 1, true));
-                    heuristic.addMove(new SwapSmart(problem, random, 1, false));
+                    heuristic.addMove(new Swap(problem, random));
                     break;
 
                 case "switch":
-                    heuristic.addMove(new Switch(problem, random, 1, true));
-                    heuristic.addMove(new Switch(problem, random, 1, false));
-                    heuristic.addMove(new SwitchSmart(problem, random, 1, true));
-                    heuristic.addMove(new SwitchSmart(problem, random, 1, false));
+                    heuristic.addMove(new Switch(problem, random));
                     break;
 
                 case "task-move":
-                    heuristic.addMove(new TaskMove(problem, random, 1, true));
-                    heuristic.addMove(new TaskMove(problem, random, 1, false));
-                    heuristic.addMove(new TaskMoveSmart(problem, random, 1, true));
-                    heuristic.addMove(new TaskMoveSmart(problem, random, 1, false));
+                    heuristic.addMove(new TaskMove(problem, random));
                     break;
 
                 case "two-shift":
-                    heuristic.addMove(new TwoShift(problem, random, 1, true));
-                    heuristic.addMove(new TwoShift(problem, random, 1, false));
-                    heuristic.addMove(new TwoShiftSmart(problem, random, 1, true));
-                    heuristic.addMove(new TwoShiftSmart(problem, random, 1, false));
+                    heuristic.addMove(new TwoShift(problem, random));
                     break;
             }
         }
@@ -166,6 +151,17 @@ public class Optimize implements Callable<Void> {
         } else {
             timeLimit = timeLimit * 1000000L;
         }
+
+        // Callback, if enabled
+        Callback callback = null;
+        if (trackFile != null) {
+            callback = new Callback(problem, input.toPath(), seed);
+        }
+
+        // Create initial solution
+        long initialSolutionRuntime = System.nanoTime();
+        Solution solution = SimpleConstructive.randomSolution(problem, random);
+        initialSolutionRuntime = System.nanoTime() - initialSolutionRuntime;
 
         // Log (if verbose)
         if (verbose) {
@@ -178,19 +174,10 @@ public class Optimize implements Callable<Void> {
             System.out.printf("+-------------------------------------------------------------+\n");
             System.out.printf("|                    Optimization progress                    |\n");
             System.out.printf("+--------------+---------------+---------------+--------------+\n");
-            System.out.printf("|   Iteration  |   Incumbent   |    Current    |   Time (s)   |\n");
+            System.out.printf("|   Iteration  |   Incumbent   |     Improv.   |   Time (s)   |\n");
             System.out.printf("+--------------+---------------+---------------+--------------+\n");
-        }
 
-        // Create initial solution
-        long initialSolutionRuntime = System.nanoTime();
-        Solution solution = SimpleConstructive.randomSolution(problem, random);
-        initialSolutionRuntime = System.nanoTime() - initialSolutionRuntime;
-
-        // Callback, if enabled
-        Callback callback = null;
-        if (trackFile != null) {
-            callback = new Callback(problem, input.toPath(), seed);
+            System.out.printf("| %s %10s | %13d |           --- | %12.2f |\n", " ", 0, solution.getCost(), initialSolutionRuntime / 1e9);
         }
 
         // Run heuristic
@@ -217,17 +204,19 @@ public class Optimize implements Callable<Void> {
             System.out.printf("+--------------+---------------+---------------+--------------+\n\n");
 
             // Neighborhood stats
-            System.out.printf("+----------------------------------------------------------------------------------+\n");
-            System.out.printf("|                             Neighborhoods statistics                             |\n");
-            System.out.printf("+-----------------------+--------------+----------+----------+----------+----------+\n");
-            System.out.printf("|          Move         |     Calls    | Improvs. | Sideways |  Accepts |  Rejects |\n");
-            System.out.printf("+-----------------------+--------------+----------+----------+----------+----------+\n");
+            if (showStats) {
+                System.out.printf("+-------------------------------------------------------------------------------------------------------+\n");
+                System.out.printf("|                                        Neighborhoods statistics                                       |\n");
+                System.out.printf("+-----------------------+------------------------+----------+----------+----------+----------+----------+\n");
+                System.out.printf("|          Move         |          Calls         | Improvs. | Sideways | Worsens  |  Accepts |  Rejects |\n");
+                System.out.printf("+-----------------------+------------------------+----------+----------+----------+----------+----------+\n");
 
-            for (Move move : heuristic.getMoves()) {
-                Util.safePrintMoveStatistics(System.out, move, "");
+                for (Move move : heuristic.getMoves()) {
+                    Util.safePrintMoveStatistics(System.out, move, heuristic.getNIters());
+                }
+
+                System.out.printf("+-----------------------+------------------------+----------+----------+----------+----------+----------+\n\n");
             }
-
-            System.out.printf("+-----------------------+--------------+----------+----------+----------+----------+\n\n");
 
             // Feasibility info
             if (feasible) {
@@ -245,10 +234,14 @@ public class Optimize implements Callable<Void> {
 
         // Output for non verbose mode
         if (!verbose) {
-            System.out.printf("%d %d %d\n",
-                    solution.getCost(),
-                    heuristic.getNIters(),
-                    initialSolutionRuntime + runtime);
+            System.out.printf("%d %d %d\n", solution.getCost(), heuristic.getNIters(), initialSolutionRuntime + runtime);
+            if (showStats) {
+                for (Move move : heuristic.getMoves()) {
+                    Move.Stats stats = move.getStats();
+                    System.out.printf("%s %d %d %d %d %d %d\n", move.name,  stats.getCalls(), stats.getImprovements(),
+                            stats.getSideways(), stats.getWorsens(), stats.getAccepts(), stats.getRejects());
+                }
+            }
         }
 
         // Save best solution found

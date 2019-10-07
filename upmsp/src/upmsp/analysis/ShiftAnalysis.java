@@ -31,7 +31,7 @@ public class ShiftAnalysis implements MoveAnalysis {
                 for (int idx2 = 0; idx2 <= solution.machines[m].getNJobs(); ++idx2) {
                     if (idx2 != idx1) {
 
-                        // Insert the job removed at another postion
+                        // Insert the job removed at another position
                         solution.machines[m].addJob(job, idx2);
 
                         // Evaluate move

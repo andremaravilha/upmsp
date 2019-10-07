@@ -55,7 +55,7 @@ public class AdaptiveSA extends Heuristic {
         // initialize the utility
         this.utility = utility;
         this.updateFrequency = freq;
-        this.maxProbability = maxProb / 4.0; // Each move is, in fact, four moves
+        this.maxProbability = maxProb;
         this.probabilities = null;
     }
 
@@ -74,6 +74,7 @@ public class AdaptiveSA extends Heuristic {
         long startTimeNano = System.nanoTime();
         long finalTimeNano = startTimeNano + timeLimitNano;
 
+        Solution previousBestSolution = null;
         bestSolution = initialSolution;
         Solution solution = initialSolution.clone();
 
@@ -93,17 +94,28 @@ public class AdaptiveSA extends Heuristic {
 
         while (System.nanoTime() < finalTimeNano && nIters < maxIters) {
 
-            //Move move = selectMove(solution);
-            Move move = selectMove(solution);
-            int delta = move.doMove(solution);
+            // Select a move and a strategy
+            Move move = null;
+            boolean useIntensificationPolicy = false;
+            boolean useMakespanMachine = false;
+
+            do {
+                useIntensificationPolicy = random.nextBoolean();
+                useMakespanMachine = random.nextBoolean();
+                move = selectMove();
+            } while (!move.hasMove(solution, useIntensificationPolicy, useMakespanMachine));
+
+            // Do move
+            int delta = move.doMove(solution, useIntensificationPolicy, useMakespanMachine);
 
             // if solution is improved...
             if (delta < 0) {
                 acceptMove(move);
 
                 if (solution.getCost() < bestSolution.getCost()) {
+                    previousBestSolution = bestSolution;
                     bestSolution = solution.clone();
-                    Util.safePrintStatus(output, nIters, bestSolution, solution, System.nanoTime() - startTimeNano, "*");
+                    Util.safePrintStatus(output, previousBestSolution, bestSolution, solution, nIters, System.nanoTime() - startTimeNano, "*");
 
                     // Callback for new incumbent solution
                     if (callback != null) {
@@ -143,7 +155,7 @@ public class AdaptiveSA extends Heuristic {
             // Update iteration counter
             nIters++;
 
-            // if necessary, update utility values
+            // if necessary, update probabilities values
             if (++itersInUtility >= updateFrequency) {
                 itersInUtility = 0L;
                 updateProbabilities((System.nanoTime() - startTimeNano) / (double) timeLimitNano);
@@ -170,15 +182,15 @@ public class AdaptiveSA extends Heuristic {
     }
 
     /**
-     * Update probabilities assinged to moves.
-     * @param normalized_runtime The runtime normalized between 0 and 1.
+     * Update probabilities assigned to moves.
+     * @param runtime The runtime normalized between 0 and 1.
      */
-    private void updateProbabilities(double normalized_runtime) {
+    private void updateProbabilities(double runtime) {
 
         // Calculate moves' utility
         double sum = 0.0;
         for (int i = 0; i < moves.size(); ++i) {
-            probabilities[i] = utility.evaluate(problem, moves.get(i).getClass(), bestSolution, normalized_runtime);
+            probabilities[i] = utility.evaluate(problem, moves.get(i).getClass(), bestSolution, runtime);
             sum += probabilities[i];
         }
 
@@ -189,37 +201,20 @@ public class AdaptiveSA extends Heuristic {
     }
 
     /**
-     * Select a move considering their utility.
+     * Select a move considering their choosing probability based on their expected utility.
      * @return A move.
      */
     @Override
-    protected Move selectMove(Solution solution) {
-
-        Move move = null;
-        double ref;
-        double acc;
-        int idx;
+    protected Move selectMove() {
+        double acc = 0.0;
+        int idx = -1;
+        double ref = random.nextDouble();
 
         do {
+            acc += probabilities[++idx];
+        } while ( (acc < ref) && (idx + 1 < moves.size()) );
 
-            // Get a random number to perform a roulette
-            ref = random.nextDouble();
-
-            // Perform roulette
-            acc = 0.0;
-            idx = -1;
-
-            do {
-                acc += probabilities[++idx];
-            } while ( (acc < ref) && (idx + 1 < moves.size()) );
-
-            // Get selected move
-            move = moves.get(idx);
-
-        // Check if there is any possible move
-        } while (!moves.get(idx).hasMove(solution));
-
-        return move;
+        return moves.get(idx);
     }
 
 }

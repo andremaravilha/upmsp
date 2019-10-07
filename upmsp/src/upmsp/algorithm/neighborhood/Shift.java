@@ -13,67 +13,88 @@ import java.util.*;
  * with the largest total execution time is always used.
  *
  * @author Tulio Toffolo
+ * @author Andre L. Maravilha
  */
 public class Shift extends Move {
 
     private Machine machine;
     private int pos1, pos2, job;
-    private boolean useMakespanMachine;
 
     /**
      * Instantiates a new Shift Move.
-     *
-     * @param problem            problem.
-     * @param random             random number generator.
-     * @param priority           the priority of this neighborhood.
-     * @param useMakespanMachine true if the makespan machine should be always
-     *                           considered or false otherwise.
+     * @param problem problem.
+     * @param random  random number generator.
      */
-    public Shift(Problem problem, Random random, int priority, boolean useMakespanMachine) {
-        super(problem, random, "Shift" + (useMakespanMachine ? "(mk)" : ""), priority);
-        this.useMakespanMachine = useMakespanMachine;
+    public Shift(Problem problem, Random random) {
+        super(problem, random, "shift");
     }
 
-    public void accept() {
-        super.accept();
-    }
-
-    public int doMove(Solution solution) {
-        super.doMove(solution);
+    @Override
+    public int doMove(Solution solution, boolean useIntensificationPolicy, boolean useMakespanMachine) {
+        super.doMove(solution, useIntensificationPolicy, useMakespanMachine);
 
         // selecting machines to involve in operation
         if (useMakespanMachine && solution.makespanMachine.getNJobs() > 1) {
             machine = solution.makespanMachine;
-        }
-        else {
+        } else {
             int m;
             do {
                 m = random.nextInt(solution.machines.length);
-            }
-            while (solution.machines[m].getNJobs() <= 1);
+            } while (solution.machines[m].getNJobs() <= 1);
             machine = solution.machines[m];
         }
 
         // selecting jobs to perform operation
-        do {
-            pos1 = random.nextInt(machine.getNJobs());
-            pos2 = random.nextInt(machine.getNJobs());
-        }
-        while (pos1 == pos2);
-        job = machine.jobs[pos1];
+        if (useIntensificationPolicy) {
 
-        // moving jobs
-        machine.delJob(pos1);
-        machine.addJob(job, pos2);
+            // selecting job (and source position) to perform operation
+            pos1 = random.nextInt(machine.getNJobs());
+            job = machine.jobs[pos1];
+            machine.delJob(pos1);
+
+            // selecting destination position
+            pos2 = random.nextInt(machine.getNJobs() + 1);
+            int cost = Integer.MAX_VALUE;
+            for (int p = 0; p <= machine.getNJobs(); p++) {
+                if (p == pos1) continue;
+                int simulatedCost = machine.getDeltaCostAddJob(job, p);
+                if (simulatedCost < cost) {
+                    cost = simulatedCost;
+                    pos2 = p;
+                }
+            }
+
+            // moving jobs
+            machine.addJob(job, pos2);
+
+        } else {
+
+            do {
+                pos1 = random.nextInt(machine.getNJobs());
+                pos2 = random.nextInt(machine.getNJobs());
+            } while (pos1 == pos2);
+            job = machine.jobs[pos1];
+
+            // moving jobs
+            machine.delJob(pos1);
+            machine.addJob(job, pos2);
+        }
 
         solution.updateCost();
         return deltaCost = solution.getCost() - initialCost;
     }
 
-    public boolean hasMove(Solution solution) {
+    @Override
+    public boolean hasMove(Solution solution, boolean useIntensificationPolicy, boolean useMakespanMachine) {
         return !useMakespanMachine || solution.makespanMachine.getNJobs() > 1;
     }
 
+    @Override
+    public void accept() {
+        super.accept();
+    }
+
+    @Override
     public void reject() {
         super.reject();
 

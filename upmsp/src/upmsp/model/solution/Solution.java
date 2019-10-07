@@ -57,6 +57,7 @@ public class Solution {
 
         nMachines = solution.nMachines;
         makespan = solution.makespan;
+        sumMachineTimes = solution.sumMachineTimes;
         makespanMachine = machines[solution.makespanMachine.id];
     }
 

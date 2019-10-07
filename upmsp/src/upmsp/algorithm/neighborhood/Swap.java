@@ -13,33 +13,25 @@ import java.util.*;
  * and then reinserts them in random positions.
  *
  * @author Tulio Toffolo
+ * @author Andre L. Maravilha
  */
 public class Swap extends Move {
 
     private Machine machine1, machine2;
     private int pos1M1, pos2M1, pos1M2, pos2M2, job1, job2;
-    private boolean useMakespanMachine;
 
     /**
      * Instantiates a new Swap Move.
-     *
-     * @param problem            problem.
-     * @param random             random number generator.
-     * @param priority           the priority of this neighborhood.
-     * @param useMakespanMachine true if the makespan machine should be always
-     *                           considered or false otherwise.
+     * @param problem problem.
+     * @param random  random number generator.
      */
-    public Swap(Problem problem, Random random, int priority, boolean useMakespanMachine) {
-        super(problem, random, "Swap" + (useMakespanMachine ? "(mk)" : ""), priority);
-        this.useMakespanMachine = useMakespanMachine;
+    public Swap(Problem problem, Random random) {
+        super(problem, random, "swap");
     }
 
-    public void accept() {
-        super.accept();
-    }
-
-    public int doMove(Solution solution) {
-        super.doMove(solution);
+    @Override
+    public int doMove(Solution solution, boolean useIntensificationPolicy, boolean useMakespanMachine) {
+        super.doMove(solution, useIntensificationPolicy, useMakespanMachine);
 
         // selecting machines to involve in operation
         if (useMakespanMachine && solution.makespanMachine.getNJobs() > 0) {
@@ -51,8 +43,7 @@ public class Swap extends Move {
 
             machine1 = solution.makespanMachine;
             machine2 = solution.machines[m];
-        }
-        else {
+        } else {
             int m1, m2;
             do {
                 m1 = random.nextInt(solution.machines.length);
@@ -64,27 +55,73 @@ public class Swap extends Move {
         }
 
         // selecting jobs to perform operation
-        pos1M1 = random.nextInt(machine1.getNJobs());
-        pos1M2 = random.nextInt(machine2.getNJobs());
-        pos2M1 = random.nextInt(machine1.getNJobs());
-        pos2M2 = random.nextInt(machine2.getNJobs());
-        job1 = machine1.jobs[pos1M1];
-        job2 = machine2.jobs[pos1M2];
+        if (useIntensificationPolicy) {
 
-        // swapping jobs
-        machine1.delJob(pos1M1);
-        machine2.delJob(pos1M2);
-        machine1.addJob(job2, pos2M1);
-        machine2.addJob(job1, pos2M2);
+            pos1M1 = random.nextInt(machine1.getNJobs());
+            pos1M2 = random.nextInt(machine2.getNJobs());
+            job1 = machine1.jobs[pos1M1];
+            job2 = machine2.jobs[pos1M2];
+
+            // removing jobs
+            machine1.delJob(pos1M1);
+            machine2.delJob(pos1M2);
+
+            // selecting position to insert in machine 1
+            pos2M1 = 0;
+            int cost = Integer.MAX_VALUE;
+            for (int p = 0; p <= machine1.getNJobs(); p++) {
+                int simulatedCost = machine1.getDeltaCostAddJob(job2, p);
+                if (simulatedCost < cost) {
+                    cost = simulatedCost;
+                    pos2M1 = p;
+                }
+            }
+
+            // selecting position to insert in machine2
+            pos2M2 = 0;
+            cost = Integer.MAX_VALUE;
+            for (int p = 0; p <= machine2.getNJobs(); p++) {
+                int simulatedCost = machine2.getDeltaCostAddJob(job1, p);
+                if (simulatedCost < cost) {
+                    cost = simulatedCost;
+                    pos2M2 = p;
+                }
+            }
+
+            machine1.addJob(job2, pos2M1);
+            machine2.addJob(job1, pos2M2);
+
+        } else {
+
+            pos1M1 = random.nextInt(machine1.getNJobs());
+            pos1M2 = random.nextInt(machine2.getNJobs());
+            pos2M1 = random.nextInt(machine1.getNJobs());
+            pos2M2 = random.nextInt(machine2.getNJobs());
+            job1 = machine1.jobs[pos1M1];
+            job2 = machine2.jobs[pos1M2];
+
+            // swapping jobs
+            machine1.delJob(pos1M1);
+            machine2.delJob(pos1M2);
+            machine1.addJob(job2, pos2M1);
+            machine2.addJob(job1, pos2M2);
+        }
 
         solution.updateCost();
         return deltaCost = solution.getCost() - initialCost;
     }
 
-    public boolean hasMove(Solution solution) {
-        return solution.getNMachines() > 1;
+    @Override
+    public boolean hasMove(Solution solution, boolean useIntensificationPolicy, boolean useMakespanMachine) {
+        return solution.getNMachines() > 1 && (!useMakespanMachine || solution.makespanMachine.getNJobs() > 0);
     }
 
+    @Override
+    public void accept() {
+        super.accept();
+    }
+
+    @Override
     public void reject() {
         super.reject();
 

@@ -221,30 +221,12 @@ public class Analyze implements Callable<Void> {
                 Heuristic heuristic = new SA(problem, random, 0.96, 1.0, 1176628);
 
                 // Add neighborhoods
-                heuristic.addMove(new Shift(problem, random, 1, true));
-                heuristic.addMove(new Shift(problem, random, 1, false));
-                heuristic.addMove(new ShiftSmart(problem, random, 1, true));
-                heuristic.addMove(new ShiftSmart(problem, random, 1, false));
-                heuristic.addMove(new SimpleSwap(problem, random, 1, true));
-                heuristic.addMove(new SimpleSwap(problem, random, 1, false));
-                heuristic.addMove(new SimpleSwapSmart(problem, random, 1, true));
-                heuristic.addMove(new SimpleSwapSmart(problem, random, 1, false));
-                heuristic.addMove(new Swap(problem, random, 1, true));
-                heuristic.addMove(new Swap(problem, random, 1, false));
-                heuristic.addMove(new SwapSmart(problem, random, 1, true));
-                heuristic.addMove(new SwapSmart(problem, random, 1, false));
-                heuristic.addMove(new Switch(problem, random, 1, true));
-                heuristic.addMove(new Switch(problem, random, 1, false));
-                heuristic.addMove(new SwitchSmart(problem, random, 1, true));
-                heuristic.addMove(new SwitchSmart(problem, random, 1, false));
-                heuristic.addMove(new TaskMove(problem, random, 1, true));
-                heuristic.addMove(new TaskMove(problem, random, 1, false));
-                heuristic.addMove(new TaskMoveSmart(problem, random, 1, true));
-                heuristic.addMove(new TaskMoveSmart(problem, random, 1, false));
-                heuristic.addMove(new TwoShift(problem, random, 1, true));
-                heuristic.addMove(new TwoShift(problem, random, 1, false));
-                heuristic.addMove(new TwoShiftSmart(problem, random, 1, true));
-                heuristic.addMove(new TwoShiftSmart(problem, random, 1, false));
+                heuristic.addMove(new Shift(problem, random));
+                heuristic.addMove(new SimpleSwap(problem, random));
+                heuristic.addMove(new Swap(problem, random));
+                heuristic.addMove(new Switch(problem, random));
+                heuristic.addMove(new TaskMove(problem, random));
+                heuristic.addMove(new TwoShift(problem, random));
 
                 // Calculate time limit
                 long timeLimit = (long) ((problem.nJobs * (problem.nMachines / 2.0) * 30) * 1000000L);

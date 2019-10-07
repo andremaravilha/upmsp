@@ -58,6 +58,7 @@ public class SA extends Heuristic {
         long startTimeNano = System.nanoTime();
         long finalTimeNano = startTimeNano + timeLimitNano;
 
+        Solution previousBestSolution = null;
         bestSolution = initialSolution;
         Solution solution = initialSolution.clone();
 
@@ -71,16 +72,29 @@ public class SA extends Heuristic {
         int itersInTemperature = 0;
 
         while (System.nanoTime() < finalTimeNano && nIters < maxIters) {
-            Move move = selectMove(solution);
-            int delta = move.doMove(solution);
+
+            // Select a move and a strategy
+            Move move = null;
+            boolean useIntensificationPolicy = false;
+            boolean useMakespanMachine = false;
+
+            do {
+                useIntensificationPolicy = random.nextBoolean();
+                useMakespanMachine = random.nextBoolean();
+                move = selectMove();
+            } while (!move.hasMove(solution, useIntensificationPolicy, useMakespanMachine));
+
+            // Do move
+            int delta = move.doMove(solution, useIntensificationPolicy, useMakespanMachine);
 
             // if solution is improved...
             if (delta < 0) {
                 acceptMove(move);
 
                 if (solution.getCost() < bestSolution.getCost()) {
+                    previousBestSolution = bestSolution;
                     bestSolution = solution.clone();
-                    Util.safePrintStatus(output, nIters, bestSolution, solution, System.nanoTime() - startTimeNano, "*");
+                    Util.safePrintStatus(output, previousBestSolution, bestSolution, solution, nIters, System.nanoTime() - startTimeNano, "*");
 
                     // Callback for new incumbent solution
                     if (callback != null) {

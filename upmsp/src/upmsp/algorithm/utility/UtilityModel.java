@@ -16,9 +16,9 @@ public interface UtilityModel {
      * @param problem Instance of the problem.
      * @param neighborhood Class of the neighborhood.
      * @param incumbent Incumbent solution.
-     * @param time Runtime normalized between 0 and 1.
+     * @param runtime Runtime normalized between 0 and 1.
      * @return The predicted utility.
      */
-    double evaluate(Problem problem, Class<? extends Move> neighborhood, Solution incumbent, double time);
+    double evaluate(Problem problem, Class<? extends Move> neighborhood, Solution incumbent, double runtime);
 
 }

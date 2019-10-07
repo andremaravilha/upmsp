@@ -158,6 +158,14 @@ public class Machine {
                 valid = false;
                 Util.safePrintf(output, "Makespan is wrong in machine %d: %d vs %d (expected value)\n", id, makespanValue, makespan);
             }
+        } else if (nJobs == 0) {
+            if (makespan != 0) {
+                valid = false;
+                Util.safePrintf(output, "Makespan is wrong in machine %d: %d vs %d (expected value)\n", id, 0, makespan);
+            }
+        } else {
+            valid = false;
+            Util.safePrintf(output, "Machine %d has negative number of jobs\n", id);
         }
 
         return valid;

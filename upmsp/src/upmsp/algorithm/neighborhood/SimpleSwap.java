@@ -11,73 +11,94 @@ import java.util.*;
  * always used.
  *
  * @author Tulio Toffolo
+ * @author Andre L. Maravilha
  */
 public class SimpleSwap extends Move {
 
     private Machine machine1, machine2;
     private int posM1, posM2, job1, job2;
-    private boolean useMakespanMachine;
 
     /**
      * Instantiates a new SimpleSwap Move.
-     *
-     * @param problem            problem.
-     * @param random             random number generator.
-     * @param priority           the priority of this neighborhood.
-     * @param useMakespanMachine true if the makespan machine should be always considered or false otherwise.
+     * @param problem problem.
+     * @param random  random number generator.
      */
-    public SimpleSwap(Problem problem, Random random, int priority, boolean useMakespanMachine) {
-        super(problem, random, "Direct-Swap" + (useMakespanMachine ? "(mk)" : ""), priority);
-        this.useMakespanMachine = useMakespanMachine;
+    public SimpleSwap(Problem problem, Random random) {
+        super(problem, random, "direct-swap");
     }
 
-    public void accept() {
-        super.accept();
-    }
-
-    public int doMove(Solution solution) {
-        super.doMove(solution);
+    @Override
+    public int doMove(Solution solution, boolean useIntensificationPolicy, boolean useMakespanMachine) {
+        super.doMove(solution, useIntensificationPolicy, useMakespanMachine);
 
         // selecting machines to involve in operation
         if (useMakespanMachine && solution.makespanMachine.getNJobs() > 0) {
             int m;
             do {
                 m = random.nextInt(solution.machines.length);
-            }
-            while (m == solution.makespanMachine.id || solution.machines[m].getNJobs() == 0);
+            } while (m == solution.makespanMachine.id || solution.machines[m].getNJobs() == 0);
 
             machine1 = solution.makespanMachine;
             machine2 = solution.machines[m];
-        }
-        else {
+        } else {
             int m1, m2;
             do {
                 m1 = random.nextInt(solution.machines.length);
                 m2 = random.nextInt(solution.machines.length);
-            }
-            while (m1 == m2 || solution.machines[m1].getNJobs() == 0 || solution.machines[m2].getNJobs() == 0);
+            } while (m1 == m2 || solution.machines[m1].getNJobs() == 0 || solution.machines[m2].getNJobs() == 0);
             machine1 = solution.machines[m1];
             machine2 = solution.machines[m2];
         }
 
         // selecting jobs to perform operation
-        posM1 = random.nextInt(machine1.getNJobs());
-        posM2 = random.nextInt(machine2.getNJobs());
-        job1 = machine1.jobs[posM1];
-        job2 = machine2.jobs[posM2];
+        if (useIntensificationPolicy) {
 
-        // swapping jobs
-        machine1.setJob(job2, posM1);
-        machine2.setJob(job1, posM2);
+            posM1 = random.nextInt(machine1.getNJobs());
+            job1 = machine1.jobs[posM1];
+
+            // selecting job in machine2
+            int cost = Integer.MAX_VALUE;
+            for (int p = 0; p < machine2.getNJobs(); p++) {
+                int candidateJob = machine2.jobs[p];
+                int simulatedCost = machine1.getDeltaCostSetJob(candidateJob, posM1) + machine2.getDeltaCostSetJob(job1, p);
+                if (simulatedCost < cost) {
+                    cost = simulatedCost;
+                    posM2 = p;
+                    job2 = candidateJob;
+                }
+            }
+
+            // swapping jobs
+            machine1.setJob(job2, posM1);
+            machine2.setJob(job1, posM2);
+
+        } else {
+
+            posM1 = random.nextInt(machine1.getNJobs());
+            posM2 = random.nextInt(machine2.getNJobs());
+            job1 = machine1.jobs[posM1];
+            job2 = machine2.jobs[posM2];
+
+            // swapping jobs
+            machine1.setJob(job2, posM1);
+            machine2.setJob(job1, posM2);
+        }
 
         solution.updateCost();
         return deltaCost = solution.getCost() - initialCost;
     }
 
-    public boolean hasMove(Solution solution) {
-        return solution.getNMachines() > 1;
+    @Override
+    public boolean hasMove(Solution solution, boolean useIntensificationPolicy, boolean useMakespanMachine) {
+        return solution.getNMachines() > 1 && (!useMakespanMachine || solution.makespanMachine.getNJobs() > 0);
     }
 
+    @Override
+    public void accept() {
+        super.accept();
+    }
+
+    @Override
     public void reject() {
         super.reject();
 

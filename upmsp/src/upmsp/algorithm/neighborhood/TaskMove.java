@@ -11,32 +11,25 @@ import java.util.*;
  * machine with the largest total execution time or not.
  *
  * @author Tulio Toffolo
+ * @author Andre L. Maravilha
  */
 public class TaskMove extends Move {
 
     private Machine machine1, machine2;
     private int posM1, posM2, job;
-    private boolean useMakespanMachine;
 
     /**
      * Instantiates a new Task move.
-     *
      * @param problem            the problem
      * @param random             the random
-     * @param priority           the priority
-     * @param useMakespanMachine the use makespan machine
      */
-    public TaskMove(Problem problem, Random random, int priority, boolean useMakespanMachine) {
-        super(problem, random, "Task-Move" + (useMakespanMachine ? "(mk)" : ""), priority);
-        this.useMakespanMachine = useMakespanMachine;
+    public TaskMove(Problem problem, Random random) {
+        super(problem, random, "task-move");
     }
 
-    public void accept() {
-        super.accept();
-    }
-
-    public int doMove(Solution solution) {
-        super.doMove(solution);
+    @Override
+    public int doMove(Solution solution, boolean useIntensificationPolicy, boolean useMakespanMachine) {
+        super.doMove(solution, useIntensificationPolicy, useMakespanMachine);
 
         // selecting machines to involve in operation
         if (useMakespanMachine && solution.makespanMachine.getNJobs() > 0) {
@@ -48,8 +41,7 @@ public class TaskMove extends Move {
 
             machine1 = solution.makespanMachine;
             machine2 = solution.machines[m];
-        }
-        else {
+        } else {
             int m1, m2;
             do {
                 m1 = random.nextInt(solution.machines.length);
@@ -61,18 +53,49 @@ public class TaskMove extends Move {
         }
 
         // selecting jobs to perform operation
-        posM1 = random.nextInt(machine1.getNJobs());
-        posM2 = random.nextInt(machine2.getNJobs() + 1);
-        job = machine1.jobs[posM1];
+        if (useIntensificationPolicy) {
 
-        // moving job
-        machine1.delJob(posM1);
-        machine2.addJob(job, posM2);
+            posM1 = random.nextInt(machine1.getNJobs());
+            job = machine1.jobs[posM1];
+            machine1.delJob(posM1);
+
+            // adding job to destination machine
+            posM2 = random.nextInt(machine2.getNJobs() + 1);
+            int cost = Integer.MAX_VALUE;
+            for (int p = 0; p <= machine2.getNJobs(); p++) {
+                int simulatedCost = machine2.getDeltaCostAddJob(job, p);
+                if (simulatedCost < cost) {
+                    cost = simulatedCost;
+                    posM2 = p;
+                }
+            }
+            machine2.addJob(job, posM2);
+
+        } else {
+            posM1 = random.nextInt(machine1.getNJobs());
+            posM2 = random.nextInt(machine2.getNJobs() + 1);
+            job = machine1.jobs[posM1];
+
+            // moving job
+            machine1.delJob(posM1);
+            machine2.addJob(job, posM2);
+        }
 
         solution.updateCost();
         return deltaCost = solution.getCost() - initialCost;
     }
 
+    @Override
+    public boolean hasMove(Solution solution, boolean useIntensificationPolicy, boolean useMakespanMachine) {
+        return solution.getNMachines() > 1 && (!useMakespanMachine || solution.makespanMachine.getNJobs() > 0);
+    }
+
+    @Override
+    public void accept() {
+        super.accept();
+    }
+
+    @Override
     public void reject() {
         super.reject();
 

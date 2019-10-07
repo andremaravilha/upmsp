@@ -45,17 +45,20 @@ public class Util {
      *
      * @param output  the output stream.
      * @param move    the Move considered.
-     * @param special some informative String to print after the row.
+     * @param nIters  number of iterations.
      */
-    public static void safePrintMoveStatistics(PrintStream output, Move move, String special) {
+    public static void safePrintMoveStatistics(PrintStream output, Move move, long nIters) {
         if (output != null) {
-            output.printf("| %-21s | %12s | %7.2f%% | %7.2f%% | %7.2f%% | %7.2f%% |\n",
+            Move.Stats stats = move.getStats();
+            output.printf("| %-21s | %12s (%6.2f%%) | %7.2f%% | %7.2f%% | %7.2f%% | %7.2f%% | %7.2f%% |\n",
                     move.name,
-                    longToString(move.getNIters()),
-                    100.0 * (move.getNImprovements() / (double) move.getNIters()),
-                    100.0 * (move.getNSideways() / (double) move.getNIters()),
-                    100.0 * (move.getNAccepts() / (double) move.getNIters()),
-                    100.0 * (move.getNRejects() / (double) move.getNIters()));
+                    longToString(stats.getCalls()),
+                    100.0 *(stats.getCalls() / (double) nIters),
+                    100.0 * (stats.getImprovements() / (double) stats.getCalls()),
+                    100.0 * (stats.getSideways() / (double) stats.getCalls()),
+                    100.0 * (stats.getWorsens() / (double) stats.getCalls()),
+                    100.0 * (stats.getAccepts() / (double) stats.getCalls()),
+                    100.0 * (stats.getRejects() / (double) stats.getCalls()));
         }
     }
 
@@ -63,21 +66,24 @@ public class Util {
     /**
      * Prints the current solution status after checking that the PrintStream is not null.
      *
-     * @param output       the output stream.
-     * @param nIters       the current iteration number.
-     * @param bestSolution the best solution object.
-     * @param solution     the current solution object.
-     * @param timeNano     elapsed time (in nanoseconds)
-     * @param special      some informative String to print after the row.
+     * @param output the output stream.
+     * @param previousIncumbent previous best solution object (or null if incumbent has not changed).
+     * @param currentIncumbent the best solution object.
+     * @param currentSolution the current solution object.
+     * @param nIters the current iteration number.
+     * @param timeNano elapsed time (in nanoseconds)
+     * @param special some informative String to print after the row.
      */
-    public static void safePrintStatus(PrintStream output, long nIters, Solution bestSolution, Solution solution, long timeNano, String special) {
+    public static void safePrintStatus(PrintStream output, Solution previousIncumbent, Solution currentIncumbent, Solution currentSolution, long nIters, long timeNano, String special) {
         if (output != null) {
-            output.printf("| %s %10s | %13d | %13d | %12.2f |\n",
-                    special,
-                    longToString(nIters),
-                    bestSolution.getCost(),
-                    solution.getCost(),
-                    timeNano / 1e9);
+            if (previousIncumbent != null) {
+                output.printf("| %s %10s | %13d | %12.2f%% | %12.2f |\n", special, longToString(nIters), currentIncumbent.getCost(),
+                        100.0 * ((previousIncumbent.getCost() - currentIncumbent.getCost()) / (double) previousIncumbent.getCost()),
+                        timeNano / 1e9);
+            } else {
+                output.printf("| %s %10s | %13d |           --- | %12.2f |\n", special, longToString(nIters), currentIncumbent.getCost(),
+                        timeNano / 1e9);
+            }
         }
     }
 

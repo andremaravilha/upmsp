@@ -66,11 +66,11 @@ public class StandardUtilityModel implements UtilityModel {
                 c.S = Double.parseDouble(properties.getProperty(move + ".S"));
                 c.SX = Double.parseDouble(properties.getProperty(move + ".SX"));
                 c.T = Double.parseDouble(properties.getProperty(move + ".T"));
-                c.J2 = Double.parseDouble(properties.getProperty(move + ".J2"));
-                c.M2 = Double.parseDouble(properties.getProperty(move + ".M2"));
-                c.S2 = Double.parseDouble(properties.getProperty(move + ".S2"));
-                c.SX2 = Double.parseDouble(properties.getProperty(move + ".SX2"));
-                c.T2 = Double.parseDouble(properties.getProperty(move + ".T2"));
+                c.J2 = Double.parseDouble(properties.getProperty(move + ".J_J"));
+                c.M2 = Double.parseDouble(properties.getProperty(move + ".M_M"));
+                c.S2 = Double.parseDouble(properties.getProperty(move + ".S_S"));
+                c.SX2 = Double.parseDouble(properties.getProperty(move + ".SX_SX"));
+                c.T2 = Double.parseDouble(properties.getProperty(move + ".T_T"));
                 c.J_M = Double.parseDouble(properties.getProperty(move + ".J_M"));
                 c.J_S = Double.parseDouble(properties.getProperty(move + ".J_S"));
                 c.J_T = Double.parseDouble(properties.getProperty(move + ".J_T"));
@@ -81,38 +81,39 @@ public class StandardUtilityModel implements UtilityModel {
     }
 
     @Override
-    public double evaluate(Problem problem, Class<? extends Move> neighborhood, Solution incumbent, double time) {
+    public double evaluate(Problem problem, Class<? extends Move> neighborhood, Solution incumbent, double runtime) {
 
         // Transform time
-        double t = FastMath.log10(time);
+        double t = FastMath.log10(runtime);
+
+        // Transform sum of machines' completion time
+        double sx = FastMath.log10(incumbent.getSumMachineTimes());
 
         // Get move coefficients
         Coefficients c = null;
-        if (Shift.class.equals(neighborhood) || ShiftSmart.class.equals(neighborhood)) {
+        if (Shift.class.equals(neighborhood)) {
             c = cShift;
-        } else if (SimpleSwap.class.equals(neighborhood) || SimpleSwapSmart.class.equals(neighborhood)) {
+        } else if (SimpleSwap.class.equals(neighborhood)) {
             c = cDirectSwap;
-        } else if (Swap.class.equals(neighborhood) || SwapSmart.class.equals(neighborhood)) {
+        } else if (Swap.class.equals(neighborhood)) {
             c = cSwap;
-        } else if (Switch.class.equals(neighborhood) || SwitchSmart.class.equals(neighborhood)) {
+        } else if (Switch.class.equals(neighborhood)) {
             c = cSwitch;
-        } else if (TaskMove.class.equals(neighborhood) || TaskMoveSmart.class.equals(neighborhood)) {
+        } else if (TaskMove.class.equals(neighborhood)) {
             c = cTaskMove;
-        } else if (TwoShift.class.equals(neighborhood) || TwoShiftSmart.class.equals(neighborhood)) {
+        } else if (TwoShift.class.equals(neighborhood)) {
             c = cTwoShift;
         }
 
-        double log10E = c.INTERCEPT +
-                c.J * problem.nJobs + c.M * problem.nMachines + c.S * problem.maximumSetupTime +
-                c.SX * incumbent.getSumMachineTimes() + c.T * t + c.J2 * (problem.nJobs * problem.nJobs) +
-                c.M2 * (problem.nMachines * problem.nMachines) + c.S2 * (problem.maximumSetupTime * problem.maximumSetupTime) +
-                c.SX2 * (incumbent.getSumMachineTimes() * incumbent.getSumMachineTimes()) + c.T2 * (t * t) +
+        double aux = c.INTERCEPT +
+                c.J * problem.nJobs + c.M * problem.nMachines + c.S * problem.maximumSetupTime + c.SX * sx + c.T * t +
+                c.J2 * (problem.nJobs * problem.nJobs) + c.M2 * (problem.nMachines * problem.nMachines) +
+                c.S2 * (problem.maximumSetupTime * problem.maximumSetupTime) + c.SX2 * (sx * sx) + c.T2 * (t * t) +
                 c.J_M * (problem.nJobs * problem.nMachines) + c.J_S * (problem.nJobs * problem.maximumSetupTime) +
                 c.J_T * (problem.nJobs * t) + c.M_S * (problem.nMachines * problem.maximumSetupTime) +
-                c.M_SX * (problem.nMachines * incumbent.getSumMachineTimes());
+                c.M_SX * (problem.nMachines * sx);
 
-        double utility = FastMath.pow(10, log10E);
-        return utility;
+        return FastMath.pow(10, aux);
     }
     
 }
