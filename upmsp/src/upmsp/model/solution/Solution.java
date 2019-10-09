@@ -185,8 +185,15 @@ public class Solution {
      * @throws IOException in case any IO error occurs.
      */
     public void write(Path path) throws IOException {
+
+        // Creates the directory hierarchy, if necessary
+        path = path.toAbsolutePath();
+        Files.createDirectories(path.getParent());
+
+        // Open file for writing
         PrintWriter writer = new PrintWriter(Files.newBufferedWriter(path));
 
+        // Write solution data
         writer.printf("%d\n", problem.nMachines);
         for (Machine machine : machines) {
             writer.printf("%d", machine.getNJobs());
@@ -199,6 +206,8 @@ public class Solution {
 
         updateCost();
         writer.printf("Total makespan: %d\n", getCost());
+
+        // Close file
         writer.close();
     }
 }
